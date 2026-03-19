@@ -4,6 +4,8 @@
     <view class="result-hero">
       <view class="hero-deco d1"></view>
       <view class="hero-deco d2"></view>
+      <view class="snow-badge s1"></view>
+      <view class="snow-badge s2"></view>
       <view class="hero-inner">
         <text class="hero-back" @click="goBack">← 返回</text>
         <text class="hero-title">商品详情</text>
@@ -112,13 +114,13 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background-color: #f2f4f8;
+  background: linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
   min-height: 100vh;
 }
 
 .result-hero {
   position: relative;
-  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  background: linear-gradient(135deg, #7ea7d1 0%, #5c81aa 100%);
   padding: 60rpx 40rpx 80rpx;
   border-radius: 0 0 50rpx 50rpx;
   overflow: hidden;
@@ -127,7 +129,28 @@ export default {
 .hero-deco {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.14);
+}
+
+.snow-badge {
+  position: absolute;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255,255,255,0.36);
+  background: rgba(255,255,255,0.14);
+}
+
+.s1 {
+  width: 34rpx;
+  height: 34rpx;
+  top: 74rpx;
+  right: 158rpx;
+}
+
+.s2 {
+  width: 18rpx;
+  height: 18rpx;
+  top: 128rpx;
+  right: 108rpx;
 }
 
 .d1 { width: 200rpx; height: 200rpx; top: -40rpx; right: -30rpx; }
@@ -167,7 +190,7 @@ export default {
 
 .loading-text {
   font-size: 28rpx;
-  color: #999;
+  color: #7c93a8;
   margin-top: 20rpx;
 }
 
@@ -184,13 +207,14 @@ export default {
 }
 
 .goods-card {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
   border-radius: 30rpx;
   padding: 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10rpx 40rpx rgba(0,0,0,0.08);
+  border: 1rpx solid rgba(183, 208, 232, 0.38);
+  box-shadow: 0 10rpx 34rpx rgba(109,145,184,0.12);
   position: relative;
   overflow: hidden;
 }
@@ -199,7 +223,7 @@ export default {
   position: absolute;
   top: 30rpx;
   right: -30rpx;
-  background: linear-gradient(135deg, #11998e, #38ef7d);
+  background: linear-gradient(135deg, #9cc2e8, #5f88b8);
   padding: 8rpx 50rpx;
   transform: rotate(45deg);
 }
@@ -240,13 +264,13 @@ export default {
 
 .price-symbol {
   font-size: 36rpx;
-  color: #ff3b30;
+  color: #4f7baa;
   font-weight: bold;
 }
 
 .price-value {
   font-size: 64rpx;
-  color: #ff3b30;
+  color: #4f7baa;
   font-weight: bold;
   font-family: 'DIN Alternate', monospace;
 }
@@ -255,31 +279,32 @@ export default {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  background: linear-gradient(135deg, #fdf2e9, #fef5e7);
+  background: linear-gradient(135deg, #f4faff, #e8f2fc);
   padding: 16rpx 30rpx;
   border-radius: 50rpx;
 }
 
 .badge-label {
   font-size: 24rpx;
-  color: #e67e22;
+  color: #6b93bd;
 }
 
 .badge-code {
   font-size: 24rpx;
-  color: #d35400;
+  color: #4f7baa;
   font-family: monospace;
   font-weight: bold;
 }
 
 .not-found-card {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
   border-radius: 30rpx;
   padding: 80rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10rpx 40rpx rgba(0,0,0,0.06);
+  border: 1rpx solid rgba(183, 208, 232, 0.38);
+  box-shadow: 0 10rpx 34rpx rgba(109,145,184,0.12);
 }
 
 .nf-emoji {
@@ -331,8 +356,8 @@ export default {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-  box-shadow: 0 8rpx 25rpx rgba(211, 84, 0, 0.35);
+  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
+  box-shadow: 0 8rpx 25rpx rgba(95, 136, 184, 0.28);
 }
 
 .primary-btn .action-text {
@@ -346,8 +371,8 @@ export default {
 }
 
 .secondary-btn {
-  background: #fff;
-  border: 2rpx solid #e0e0e0;
+  background: rgba(255,255,255,0.92);
+  border: 2rpx solid rgba(177, 203, 229, 0.7);
 }
 
 .secondary-btn .action-text {

@@ -1,12 +1,15 @@
 <template>
   <view class="container">
+    <view class="winter-ornament o1"></view>
+    <view class="winter-ornament o2"></view>
+    <view class="winter-ornament o3"></view>
     <view class="content" v-if="!showScanner">
       <view class="scan-card">
         <view class="scan-btn-circle" @click="startScan">
           <view class="scan-ring ring-outer"></view>
           <view class="scan-ring ring-inner"></view>
           <view class="scan-icon-box">
-            <text class="scan-icon-text">扫</text>
+            <image class="scan-icon-image" src="/static/icons/camera-soft.svg" mode="aspectFit"></image>
           </view>
         </view>
         <text class="scan-label">点击开始扫码</text>
@@ -135,24 +138,57 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background-color: #f2f4f8;
+  background:
+    linear-gradient(180deg, #eef6ff 0%, #e8f1fb 45%, #f7fbff 100%);
   min-height: 100vh;
   overflow: hidden;
+  position: relative;
+}
+
+.winter-ornament {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1rpx solid rgba(173, 201, 232, 0.55);
+  backdrop-filter: blur(8rpx);
+}
+
+.o1 {
+  width: 200rpx;
+  height: 200rpx;
+  top: -40rpx;
+  left: -60rpx;
+}
+
+.o2 {
+  width: 120rpx;
+  height: 120rpx;
+  top: 120rpx;
+  right: 40rpx;
+}
+
+.o3 {
+  width: 160rpx;
+  height: 160rpx;
+  top: 420rpx;
+  right: -40rpx;
 }
 
 .content {
   padding: 30rpx;
   position: relative;
+  z-index: 2;
 }
 
 .scan-card {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 249, 255, 0.94));
   border-radius: 30rpx;
   padding: 60rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 10rpx 40rpx rgba(211, 84, 0, 0.15);
+  border: 1rpx solid rgba(183, 208, 232, 0.45);
+  box-shadow: 0 14rpx 40rpx rgba(109, 145, 184, 0.14);
 }
 
 .scan-btn-circle {
@@ -167,7 +203,7 @@ export default {
 .scan-ring {
   position: absolute;
   border-radius: 50%;
-  border: 4rpx solid rgba(230, 126, 34, 0.3);
+  border: 4rpx solid rgba(136, 176, 216, 0.34);
 }
 
 .ring-outer {
@@ -179,26 +215,25 @@ export default {
 .ring-inner {
   width: 180rpx;
   height: 180rpx;
-  border-color: rgba(192, 57, 43, 0.4);
+  border-color: rgba(189, 219, 244, 0.95);
   animation: pulse 2s ease-in-out 0.3s infinite;
 }
 
 .scan-icon-box {
   width: 140rpx;
   height: 140rpx;
-  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  background: linear-gradient(135deg, #f8fcff 0%, #e2eefb 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 30rpx rgba(211, 84, 0, 0.4);
+  box-shadow: 0 10rpx 30rpx rgba(104, 146, 189, 0.18);
   z-index: 2;
 }
 
-.scan-icon-text {
-  font-size: 56rpx;
-  color: #fff;
-  font-weight: bold;
+.scan-icon-image {
+  width: 68rpx;
+  height: 68rpx;
 }
 
 @keyframes pulse {
@@ -215,22 +250,23 @@ export default {
 .scan-label {
   font-size: 34rpx;
   font-weight: bold;
-  color: #333;
+  color: #31557a;
   margin-top: 30rpx;
 }
 
 .scan-hint {
   font-size: 24rpx;
-  color: #aaa;
+  color: #7d94ab;
   margin-top: 10rpx;
 }
 
 .tips-card {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(245, 250, 255, 0.96));
   border-radius: 24rpx;
   padding: 40rpx;
   margin-top: 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(183, 208, 232, 0.4);
+  box-shadow: 0 10rpx 30rpx rgba(109, 145, 184, 0.1);
 }
 
 .tips-header {
@@ -242,14 +278,14 @@ export default {
 .tips-icon {
   font-size: 30rpx;
   margin-right: 12rpx;
-  color: #e67e22;
+  color: #6b93bd;
   font-weight: bold;
 }
 
 .tips-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #333;
+  color: #31557a;
 }
 
 .tip-item {
@@ -259,7 +295,7 @@ export default {
 }
 
 .tip-dot {
-  color: #e67e22;
+  color: #7aa7d4;
   font-size: 32rpx;
   margin-right: 14rpx;
   font-weight: bold;
@@ -267,20 +303,20 @@ export default {
 
 .tip-text {
   font-size: 26rpx;
-  color: #666;
+  color: #728aa3;
 }
 
 .test-codes {
   margin-top: 30rpx;
   padding: 24rpx;
-  background: linear-gradient(135deg, #fdf2e9 0%, #fef5e7 100%);
+  background: linear-gradient(135deg, #f5faff 0%, #eaf3fc 100%);
   border-radius: 16rpx;
 }
 
 .test-title {
   font-size: 26rpx;
   font-weight: bold;
-  color: #e67e22;
+  color: #5c88b7;
   margin-bottom: 16rpx;
   display: block;
 }
@@ -289,7 +325,7 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 10rpx 0;
-  border-bottom: 1rpx dashed rgba(230, 126, 34, 0.2);
+  border-bottom: 1rpx dashed rgba(122, 167, 212, 0.24);
 }
 
 .code-row:last-child {
@@ -298,13 +334,13 @@ export default {
 
 .code-name {
   font-size: 24rpx;
-  color: #555;
+  color: #68809a;
   font-weight: 500;
 }
 
 .code-value {
   font-size: 24rpx;
-  color: #d35400;
+  color: #4773a4;
   font-family: monospace;
 }
 
@@ -314,7 +350,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(24, 42, 61, 0.88);
   z-index: 9999;
 }
 
@@ -333,7 +369,7 @@ export default {
   background-color: #000;
   border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 0 60rpx rgba(211, 84, 0, 0.4);
+  box-shadow: 0 0 60rpx rgba(132, 173, 214, 0.34);
 }
 
 .scanner-footer {
@@ -341,7 +377,7 @@ export default {
 }
 
 .cancel-btn {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
   padding: 20rpx 60rpx;
   border-radius: 50rpx;
 }

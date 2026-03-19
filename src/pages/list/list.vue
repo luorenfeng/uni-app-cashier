@@ -3,6 +3,8 @@
     <view class="list-hero">
       <view class="hero-deco d1"></view>
       <view class="hero-deco d2"></view>
+      <view class="snow-badge s1"></view>
+      <view class="snow-badge s2"></view>
       <view class="hero-inner">
         <view class="hero-row">
           <view>
@@ -83,13 +85,13 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background-color: #f2f4f8;
+  background: linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
   min-height: 100vh;
 }
 
 .list-hero {
   position: relative;
-  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  background: linear-gradient(135deg, #7ea7d1 0%, #5c81aa 100%);
   padding: 60rpx 40rpx 80rpx;
   border-radius: 0 0 50rpx 50rpx;
   overflow: hidden;
@@ -98,7 +100,28 @@ export default {
 .hero-deco {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.snow-badge {
+  position: absolute;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.s1 {
+  width: 34rpx;
+  height: 34rpx;
+  top: 72rpx;
+  right: 170rpx;
+}
+
+.s2 {
+  width: 18rpx;
+  height: 18rpx;
+  top: 132rpx;
+  right: 118rpx;
 }
 
 .d1 {
@@ -141,7 +164,7 @@ export default {
 }
 
 .export-chip {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
   padding: 14rpx 28rpx;
   border-radius: 50rpx;
 }
@@ -166,18 +189,19 @@ export default {
 .goods-item {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96));
   border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(183, 208, 232, 0.4);
+  box-shadow: 0 8rpx 24rpx rgba(109, 145, 184, 0.1);
 }
 
 .item-index {
   width: 48rpx;
   height: 48rpx;
   border-radius: 14rpx;
-  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -225,32 +249,33 @@ export default {
 
 .item-code {
   font-size: 22rpx;
-  color: #bbb;
+  color: #8aa1b7;
   font-family: monospace;
   margin-bottom: 8rpx;
 }
 
 .item-price {
   font-size: 32rpx;
-  color: #ff3b30;
+  color: #4f7baa;
   font-weight: bold;
 }
 
 .empty-card {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96));
   border-radius: 30rpx;
   padding: 100rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  border: 1rpx solid rgba(183, 208, 232, 0.4);
+  box-shadow: 0 8rpx 24rpx rgba(109, 145, 184, 0.1);
   margin-top: 40rpx;
 }
 
 .empty-emoji {
   font-size: 60rpx;
   margin-bottom: 30rpx;
-  color: #d35400;
+  color: #6b93bd;
   font-weight: bold;
 }
 
@@ -268,7 +293,7 @@ export default {
 }
 
 .empty-btn {
-  background: linear-gradient(135deg, #e67e22, #d35400);
+  background: linear-gradient(135deg, #9cc2e8, #5f88b8);
   padding: 20rpx 50rpx;
   border-radius: 50rpx;
 }
