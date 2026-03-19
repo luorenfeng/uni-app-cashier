@@ -1,0 +1,57 @@
+﻿{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "扫一扫"
+      }
+    },
+    {
+      "path": "pages/result/result",
+      "style": {
+        "navigationBarTitleText": "商品信息"
+      }
+    },
+    {
+      "path": "pages/edit/edit",
+      "style": {
+        "navigationBarTitleText": "手动录入"
+      }
+    },
+    {
+      "path": "pages/list/list",
+      "style": {
+        "navigationBarTitleText": "商品库"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "我的商超",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007aff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "fontSize": "14px",
+    "iconWidth": "28px",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "扫码",
+        "iconPath": "static/tabbar/scan.png",
+        "selectedIconPath": "static/tabbar/scan-on.png"
+      },
+      {
+        "pagePath": "pages/list/list",
+        "text": "商品库",
+        "iconPath": "static/tabbar/list.png",
+        "selectedIconPath": "static/tabbar/list-on.png"
+      }
+    ]
+  }
+}
+

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.hbuilderx/
+.uni/
+.vscode/
+.DS_Store
