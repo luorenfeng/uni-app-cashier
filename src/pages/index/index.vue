@@ -13,24 +13,22 @@
           </view>
         </view>
         <text class="scan-label">点击开始扫码</text>
-        <text class="scan-hint">将相机对准商品条形码即可识别</text>
       </view>
 
       <view class="tips-card">
         <view class="tips-header">
-          <text class="tips-icon">提</text>
           <text class="tips-title">扫码小技巧</text>
         </view>
         <view class="tip-item">
-          <text class="tip-dot">•</text>
+          <text class="tip-dot">·</text>
           <text class="tip-text">请保持商品条码位于识别框内</text>
         </view>
         <view class="tip-item">
-          <text class="tip-dot">•</text>
-          <text class="tip-text">如果模糊，可稍微拉远手机距离</text>
+          <text class="tip-dot">·</text>
+          <text class="tip-text">如果画面模糊，可稍微拉远手机距离</text>
         </view>
         <view class="tip-item">
-          <text class="tip-dot">•</text>
+          <text class="tip-dot">·</text>
           <text class="tip-text">光线充足时，扫描效果会更稳定</text>
         </view>
 
@@ -139,7 +137,7 @@ export default {
 <style lang="scss" scoped>
 .container {
   background:
-    linear-gradient(180deg, #eef6ff 0%, #e8f1fb 45%, #f7fbff 100%);
+    linear-gradient(180deg, #f7e7d7 0%, #f8efe5 45%, #fff8f0 100%);
   min-height: 100vh;
   overflow: hidden;
   position: relative;
@@ -148,8 +146,8 @@ export default {
 .winter-ornament {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1rpx solid rgba(173, 201, 232, 0.55);
+  background: rgba(255, 247, 238, 0.6);
+  border: 1rpx solid rgba(222, 181, 143, 0.55);
   backdrop-filter: blur(8rpx);
 }
 
@@ -181,14 +179,42 @@ export default {
 }
 
 .scan-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 249, 255, 0.94));
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 30%),
+    linear-gradient(145deg, rgba(255, 251, 246, 0.98), rgba(248, 236, 222, 0.94));
   border-radius: 30rpx;
   padding: 60rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1rpx solid rgba(183, 208, 232, 0.45);
-  box-shadow: 0 14rpx 40rpx rgba(109, 145, 184, 0.14);
+  border: 1rpx solid rgba(224, 190, 155, 0.42);
+  box-shadow:
+    0 18rpx 44rpx rgba(152, 104, 68, 0.12),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
+}
+
+.scan-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 26rpx;
+  right: 26rpx;
+  height: 8rpx;
+  border-radius: 0 0 999rpx 999rpx;
+  background: rgba(248, 236, 222, 0.94);
+}
+
+.scan-card::after {
+  content: '';
+  position: absolute;
+  width: 180rpx;
+  height: 180rpx;
+  top: -70rpx;
+  right: -50rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 204, 168, 0.42) 0%, rgba(245, 204, 168, 0) 70%);
 }
 
 .scan-btn-circle {
@@ -203,7 +229,7 @@ export default {
 .scan-ring {
   position: absolute;
   border-radius: 50%;
-  border: 4rpx solid rgba(136, 176, 216, 0.34);
+  border: 4rpx solid rgba(210, 149, 95, 0.28);
 }
 
 .ring-outer {
@@ -215,19 +241,19 @@ export default {
 .ring-inner {
   width: 180rpx;
   height: 180rpx;
-  border-color: rgba(189, 219, 244, 0.95);
+  border-color: rgba(242, 204, 170, 0.9);
   animation: pulse 2s ease-in-out 0.3s infinite;
 }
 
 .scan-icon-box {
   width: 140rpx;
   height: 140rpx;
-  background: linear-gradient(135deg, #f8fcff 0%, #e2eefb 100%);
+  background: linear-gradient(135deg, #fff7ef 0%, #f9dec2 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10rpx 30rpx rgba(104, 146, 189, 0.18);
+  box-shadow: 0 10rpx 30rpx rgba(180, 118, 67, 0.18);
   z-index: 2;
 }
 
@@ -250,23 +276,34 @@ export default {
 .scan-label {
   font-size: 34rpx;
   font-weight: bold;
-  color: #31557a;
+  color: #7c4627;
   margin-top: 30rpx;
 }
 
-.scan-hint {
-  font-size: 24rpx;
-  color: #7d94ab;
-  margin-top: 10rpx;
-}
 
 .tips-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(245, 250, 255, 0.96));
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), transparent 32%),
+    linear-gradient(160deg, rgba(255, 251, 247, 0.98), rgba(249, 239, 229, 0.95));
   border-radius: 24rpx;
   padding: 40rpx;
   margin-top: 30rpx;
-  border: 1rpx solid rgba(183, 208, 232, 0.4);
-  box-shadow: 0 10rpx 30rpx rgba(109, 145, 184, 0.1);
+  border: 1rpx solid rgba(224, 190, 155, 0.38);
+  box-shadow:
+    0 14rpx 32rpx rgba(152, 104, 68, 0.1),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.88);
+}
+
+.tips-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0.18) 8rpx, transparent 8rpx, transparent 28rpx);
+  opacity: 0.22;
+  pointer-events: none;
 }
 
 .tips-header {
@@ -275,17 +312,11 @@ export default {
   margin-bottom: 24rpx;
 }
 
-.tips-icon {
-  font-size: 30rpx;
-  margin-right: 12rpx;
-  color: #6b93bd;
-  font-weight: bold;
-}
 
 .tips-title {
   font-size: 32rpx;
   font-weight: bold;
-  color: #31557a;
+  color: #7c4627;
 }
 
 .tip-item {
@@ -295,7 +326,7 @@ export default {
 }
 
 .tip-dot {
-  color: #7aa7d4;
+  color: #d88b50;
   font-size: 32rpx;
   margin-right: 14rpx;
   font-weight: bold;
@@ -303,20 +334,20 @@ export default {
 
 .tip-text {
   font-size: 26rpx;
-  color: #728aa3;
+  color: #967256;
 }
 
 .test-codes {
   margin-top: 30rpx;
   padding: 24rpx;
-  background: linear-gradient(135deg, #f5faff 0%, #eaf3fc 100%);
+  background: linear-gradient(135deg, #fff6ee 0%, #f8eadc 100%);
   border-radius: 16rpx;
 }
 
 .test-title {
   font-size: 26rpx;
   font-weight: bold;
-  color: #5c88b7;
+  color: #b56834;
   margin-bottom: 16rpx;
   display: block;
 }
@@ -325,7 +356,7 @@ export default {
   display: flex;
   justify-content: space-between;
   padding: 10rpx 0;
-  border-bottom: 1rpx dashed rgba(122, 167, 212, 0.24);
+  border-bottom: 1rpx dashed rgba(210, 149, 95, 0.24);
 }
 
 .code-row:last-child {
@@ -334,13 +365,13 @@ export default {
 
 .code-name {
   font-size: 24rpx;
-  color: #68809a;
+  color: #8b684d;
   font-weight: 500;
 }
 
 .code-value {
   font-size: 24rpx;
-  color: #4773a4;
+  color: #a45a2f;
   font-family: monospace;
 }
 
@@ -350,7 +381,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(24, 42, 61, 0.88);
+  background: rgba(56, 35, 24, 0.84);
   z-index: 9999;
 }
 
@@ -369,7 +400,7 @@ export default {
   background-color: #000;
   border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 0 60rpx rgba(132, 173, 214, 0.34);
+  box-shadow: 0 0 60rpx rgba(210, 149, 95, 0.28);
 }
 
 .scanner-footer {
@@ -377,7 +408,7 @@ export default {
 }
 
 .cancel-btn {
-  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
+  background: linear-gradient(135deg, #e6a76d 0%, #c46a33 100%);
   padding: 20rpx 60rpx;
   border-radius: 50rpx;
 }
@@ -388,3 +419,6 @@ export default {
   font-weight: bold;
 }
 </style>
+
+
+

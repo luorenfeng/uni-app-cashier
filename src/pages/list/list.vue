@@ -24,7 +24,7 @@
           <text class="index-num">{{ index + 1 }}</text>
         </view>
         <view class="item-img-wrap">
-          <image class="item-img" :src="item.image || '/static/logo.png'" mode="aspectFill"></image>
+          <image class="item-img" :src="item.image || '/static/goods/nongfu.png'" mode="aspectFill"></image>
         </view>
         <view class="item-info">
           <text class="item-name">{{ item.name }}</text>
@@ -34,7 +34,6 @@
       </view>
 
       <view v-if="goodsList.length === 0" class="empty-card">
-        <text class="empty-emoji">空</text>
         <text class="empty-title">商品库还是空的</text>
         <text class="empty-hint">去扫码录入第一件商品吧</text>
         <view class="empty-btn" @click="goScan">
@@ -85,15 +84,14 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background: linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, #f7e7d7 0%, #fff8f0 100%);
   min-height: 100vh;
 }
 
 .list-hero {
   position: relative;
-  background: linear-gradient(135deg, #7ea7d1 0%, #5c81aa 100%);
-  padding: 60rpx 40rpx 80rpx;
-  border-radius: 0 0 50rpx 50rpx;
+  background: transparent;
+  padding: 30rpx 30rpx 0;
   overflow: hidden;
 }
 
@@ -106,8 +104,8 @@ export default {
 .snow-badge {
   position: absolute;
   border-radius: 50%;
-  border: 2rpx solid rgba(255, 255, 255, 0.36);
-  background: rgba(255, 255, 255, 0.14);
+  border: 2rpx solid rgba(255, 241, 229, 0.4);
+  background: rgba(255, 241, 229, 0.16);
 }
 
 .s1 {
@@ -141,67 +139,98 @@ export default {
 .hero-inner {
   position: relative;
   z-index: 2;
+  width: 100%;
 }
 
 .hero-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.9), transparent 34%),
+    linear-gradient(150deg, rgba(255, 251, 247, 0.9), rgba(248, 236, 222, 0.78));
+  border: 1rpx solid rgba(236, 205, 173, 0.52);
+  border-radius: 28rpx;
+  padding: 24rpx 24rpx 22rpx;
+  backdrop-filter: blur(8rpx);
+  box-shadow:
+    0 8rpx 24rpx rgba(103, 58, 29, 0.12),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.72);
 }
 
 .hero-title {
   font-size: 42rpx;
   font-weight: bold;
-  color: #fff;
+  color: #6e3820;
   display: block;
 }
 
 .hero-count {
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.75);
+  color: #9b7357;
   display: block;
   margin-top: 8rpx;
 }
 
 .export-chip {
-  background: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(135deg, #e1a367, #be6730);
   padding: 14rpx 28rpx;
   border-radius: 50rpx;
+  border: 1rpx solid rgba(181, 93, 43, 0.16);
+  box-shadow: 0 6rpx 16rpx rgba(190, 103, 48, 0.22);
 }
 
 .export-chip:active {
-  background: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, #e8ad74, #c46e37);
 }
 
 .export-text {
   font-size: 24rpx;
-  color: #fff;
+  color: #fffaf5;
   font-weight: 500;
 }
 
 .content {
   padding: 0 30rpx 40rpx;
-  margin-top: -30rpx;
+  margin-top: 24rpx;
   position: relative;
   z-index: 5;
 }
 
 .goods-item {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96));
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), transparent 34%),
+    linear-gradient(150deg, rgba(255, 251, 247, 0.98), rgba(248, 236, 222, 0.94));
   border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  border: 1rpx solid rgba(183, 208, 232, 0.4);
-  box-shadow: 0 8rpx 24rpx rgba(109, 145, 184, 0.1);
+  border: 1rpx solid rgba(224, 190, 155, 0.38);
+  box-shadow:
+    0 10rpx 28rpx rgba(152, 104, 68, 0.1),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.88);
+}
+
+.goods-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18rpx;
+  bottom: 18rpx;
+  width: 10rpx;
+  border-radius: 0 999rpx 999rpx 0;
+  background: linear-gradient(180deg, #efc49d, #c7773d);
 }
 
 .item-index {
   width: 48rpx;
   height: 48rpx;
   border-radius: 14rpx;
-  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
+  background: linear-gradient(135deg, #e1a367 0%, #be6730 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,35 +278,35 @@ export default {
 
 .item-code {
   font-size: 22rpx;
-  color: #8aa1b7;
+  color: #a18066;
   font-family: monospace;
   margin-bottom: 8rpx;
 }
 
 .item-price {
   font-size: 32rpx;
-  color: #4f7baa;
+  color: #b35f2e;
   font-weight: bold;
 }
 
 .empty-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 255, 0.96));
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.95), transparent 36%),
+    linear-gradient(160deg, rgba(255, 251, 247, 0.98), rgba(248, 236, 222, 0.94));
   border-radius: 30rpx;
   padding: 100rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1rpx solid rgba(183, 208, 232, 0.4);
-  box-shadow: 0 8rpx 24rpx rgba(109, 145, 184, 0.1);
+  border: 1rpx solid rgba(224, 190, 155, 0.38);
+  box-shadow:
+    0 10rpx 28rpx rgba(152, 104, 68, 0.1),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.88);
   margin-top: 40rpx;
 }
 
-.empty-emoji {
-  font-size: 60rpx;
-  margin-bottom: 30rpx;
-  color: #6b93bd;
-  font-weight: bold;
-}
 
 .empty-title {
   font-size: 34rpx;
@@ -293,7 +322,7 @@ export default {
 }
 
 .empty-btn {
-  background: linear-gradient(135deg, #9cc2e8, #5f88b8);
+  background: linear-gradient(135deg, #e1a367, #be6730);
   padding: 20rpx 50rpx;
   border-radius: 50rpx;
 }
@@ -304,3 +333,6 @@ export default {
   font-weight: bold;
 }
 </style>
+
+
+

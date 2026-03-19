@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="container">
     <view class="edit-hero">
       <view class="hero-deco d1"></view>
@@ -110,7 +110,7 @@ export default {
   onLoad(options) {
     if (!options.code) return;
     this.code = options.code;
-    this.initData(options);
+    this.loadSavedGoods();
   },
   methods: {
     normalizePriceInput(value) {
@@ -139,7 +139,7 @@ export default {
       }
       return num.toFixed(2);
     },
-    initData(options) {
+    loadSavedGoods() {
       const customGoods = uni.getStorageSync('custom_goods') || {};
       const savedItem = customGoods[this.code];
 
@@ -147,21 +147,7 @@ export default {
         this.name = savedItem.name || '';
         this.price = this.normalizePriceInput(savedItem.price || '');
         this.image = savedItem.image || '';
-      } else {
-        if (options.name) this.name = decodeURIComponent(options.name);
-        if (options.price) this.price = this.normalizePriceInput(options.price);
-        if (options.image) this.image = decodeURIComponent(options.image);
       }
-    },
-    chooseImage() {
-      uni.chooseImage({
-        count: 1,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera'],
-        success: (res) => {
-          this.image = res.tempFilePaths[0];
-        }
-      });
     },
     saveGoods() {
       const name = (this.name || '').trim();
@@ -193,13 +179,13 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background: linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, #f7e7d7 0%, #fff8f0 100%);
   min-height: 100vh;
 }
 
 .edit-hero {
   position: relative;
-  background: linear-gradient(135deg, #7ea7d1 0%, #5c81aa 100%);
+  background: linear-gradient(135deg, #c9783e 0%, #9d4e29 100%);
   padding: 60rpx 40rpx 80rpx;
   border-radius: 0 0 50rpx 50rpx;
   overflow: hidden;
@@ -214,8 +200,8 @@ export default {
 .snow-badge {
   position: absolute;
   border-radius: 50%;
-  border: 2rpx solid rgba(255,255,255,0.36);
-  background: rgba(255,255,255,0.14);
+  border: 2rpx solid rgba(255,241,229,0.4);
+  background: rgba(255,241,229,0.16);
 }
 
 .s1 {
@@ -268,11 +254,28 @@ export default {
 }
 
 .form-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.94), transparent 34%),
+    linear-gradient(150deg, rgba(255,251,247,0.98), rgba(248,236,222,0.94));
   border-radius: 30rpx;
   padding: 30rpx 36rpx;
-  border: 1rpx solid rgba(183, 208, 232, 0.38);
-  box-shadow: 0 10rpx 34rpx rgba(109,145,184,0.12);
+  border: 1rpx solid rgba(224, 190, 155, 0.36);
+  box-shadow:
+    0 12rpx 34rpx rgba(152,104,68,0.12),
+    inset 0 1rpx 0 rgba(255,255,255,0.9);
+}
+
+.form-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24rpx;
+  right: 24rpx;
+  height: 8rpx;
+  border-radius: 0 0 999rpx 999rpx;
+  background: linear-gradient(90deg, rgba(214, 151, 97, 0.2), rgba(214, 151, 97, 0.72), rgba(214, 151, 97, 0.2));
 }
 
 .form-item {
@@ -303,13 +306,13 @@ export default {
 }
 
 .optional {
-  color: #90a6bd;
+  color: #b08a6f;
   font-size: 24rpx;
   margin-left: 8rpx;
 }
 
 .input-box {
-  background: #f3f8fe;
+  background: #fff5ec;
   padding: 20rpx 24rpx;
   border-radius: 16rpx;
 }
@@ -325,7 +328,7 @@ export default {
 }
 
 .input-shell {
-  background: #f3f8fe;
+  background: #fff5ec;
   border-radius: 16rpx;
   padding: 20rpx 24rpx;
 }
@@ -338,7 +341,7 @@ export default {
 }
 
 .input-placeholder {
-  color: #9ab1c8;
+  color: #ba977d;
 }
 
 .img-area {
@@ -348,8 +351,8 @@ export default {
 .upload-box {
   width: 240rpx;
   height: 240rpx;
-  background: linear-gradient(135deg, #f7fbff, #e9f2fb);
-  border: 3rpx dashed #b9d1e8;
+  background: linear-gradient(135deg, #fff8f1, #f7e7d7);
+  border: 3rpx dashed #e1b792;
   border-radius: 20rpx;
   display: flex;
   flex-direction: column;
@@ -364,7 +367,7 @@ export default {
 
 .upload-hint {
   font-size: 22rpx;
-  color: #8ea6bc;
+  color: #a7856b;
 }
 
 .preview-wrap {
@@ -401,13 +404,13 @@ export default {
 }
 
 .submit-btn {
-  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
+  background: linear-gradient(135deg, #e1a367 0%, #be6730 100%);
   height: 100rpx;
   border-radius: 50rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 25rpx rgba(95, 136, 184, 0.28);
+  box-shadow: 0 8rpx 25rpx rgba(190, 103, 48, 0.26);
   margin-bottom: 24rpx;
 }
 
@@ -428,7 +431,7 @@ export default {
   align-items: center;
   justify-content: center;
   background: rgba(255,255,255,0.92);
-  border: 2rpx solid rgba(177, 203, 229, 0.7);
+  border: 2rpx solid rgba(224, 190, 155, 0.62);
 }
 
 .cancel-text {
@@ -436,3 +439,7 @@ export default {
   font-size: 28rpx;
 }
 </style>
+
+
+
+

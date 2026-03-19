@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "scan-app",
   "appid": "",
   "description": "朋友间简易商品扫码应用",
@@ -48,3 +48,4 @@
     "enable": false
   }
 }
+

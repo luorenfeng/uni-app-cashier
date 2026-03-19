@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="container">
     <!-- 渐变头部 -->
     <view class="result-hero">
@@ -114,13 +114,13 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  background: linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
+  background: linear-gradient(180deg, #f7e7d7 0%, #fff8f0 100%);
   min-height: 100vh;
 }
 
 .result-hero {
   position: relative;
-  background: linear-gradient(135deg, #7ea7d1 0%, #5c81aa 100%);
+  background: linear-gradient(135deg, #c9783e 0%, #9d4e29 100%);
   padding: 60rpx 40rpx 80rpx;
   border-radius: 0 0 50rpx 50rpx;
   overflow: hidden;
@@ -135,8 +135,8 @@ export default {
 .snow-badge {
   position: absolute;
   border-radius: 50%;
-  border: 2rpx solid rgba(255,255,255,0.36);
-  background: rgba(255,255,255,0.14);
+  border: 2rpx solid rgba(255,241,229,0.4);
+  background: rgba(255,241,229,0.16);
 }
 
 .s1 {
@@ -190,7 +190,7 @@ export default {
 
 .loading-text {
   font-size: 28rpx;
-  color: #7c93a8;
+  color: #a17b61;
   margin-top: 20rpx;
 }
 
@@ -207,14 +207,18 @@ export default {
 }
 
 .goods-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,0.94), transparent 34%),
+    linear-gradient(150deg, rgba(255,251,247,0.98), rgba(248,236,222,0.94));
   border-radius: 30rpx;
   padding: 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1rpx solid rgba(183, 208, 232, 0.38);
-  box-shadow: 0 10rpx 34rpx rgba(109,145,184,0.12);
+  border: 1rpx solid rgba(224, 190, 155, 0.36);
+  box-shadow:
+    0 12rpx 34rpx rgba(152,104,68,0.12),
+    inset 0 1rpx 0 rgba(255,255,255,0.9);
   position: relative;
   overflow: hidden;
 }
@@ -223,7 +227,7 @@ export default {
   position: absolute;
   top: 30rpx;
   right: -30rpx;
-  background: linear-gradient(135deg, #9cc2e8, #5f88b8);
+  background: linear-gradient(135deg, #e1a367, #be6730);
   padding: 8rpx 50rpx;
   transform: rotate(45deg);
 }
@@ -264,13 +268,13 @@ export default {
 
 .price-symbol {
   font-size: 36rpx;
-  color: #4f7baa;
+  color: #b35f2e;
   font-weight: bold;
 }
 
 .price-value {
   font-size: 64rpx;
-  color: #4f7baa;
+  color: #b35f2e;
   font-weight: bold;
   font-family: 'DIN Alternate', monospace;
 }
@@ -279,32 +283,38 @@ export default {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  background: linear-gradient(135deg, #f4faff, #e8f2fc);
+  background: linear-gradient(135deg, #fff6ee, #f8eadc);
   padding: 16rpx 30rpx;
   border-radius: 50rpx;
 }
 
 .badge-label {
   font-size: 24rpx;
-  color: #6b93bd;
+  color: #c5763c;
 }
 
 .badge-code {
   font-size: 24rpx;
-  color: #4f7baa;
+  color: #a45a2f;
   font-family: monospace;
   font-weight: bold;
 }
 
 .not-found-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,249,255,0.96));
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.95), transparent 36%),
+    linear-gradient(160deg, rgba(255,251,247,0.98), rgba(248,236,222,0.94));
   border-radius: 30rpx;
   padding: 80rpx 40rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1rpx solid rgba(183, 208, 232, 0.38);
-  box-shadow: 0 10rpx 34rpx rgba(109,145,184,0.12);
+  border: 1rpx solid rgba(224, 190, 155, 0.36);
+  box-shadow:
+    0 12rpx 34rpx rgba(152,104,68,0.12),
+    inset 0 1rpx 0 rgba(255,255,255,0.9);
 }
 
 .nf-emoji {
@@ -320,10 +330,11 @@ export default {
 }
 
 .nf-code-box {
-  background: #f5f5f5;
+  background: linear-gradient(180deg, #fff6ee, #f8eadc);
   padding: 14rpx 30rpx;
   border-radius: 30rpx;
   margin-bottom: 20rpx;
+  border: 1rpx solid rgba(224, 190, 155, 0.34);
 }
 
 .nf-code {
@@ -356,8 +367,8 @@ export default {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #9cc2e8 0%, #5f88b8 100%);
-  box-shadow: 0 8rpx 25rpx rgba(95, 136, 184, 0.28);
+  background: linear-gradient(135deg, #e1a367 0%, #be6730 100%);
+  box-shadow: 0 8rpx 25rpx rgba(190, 103, 48, 0.26);
 }
 
 .primary-btn .action-text {
@@ -372,7 +383,7 @@ export default {
 
 .secondary-btn {
   background: rgba(255,255,255,0.92);
-  border: 2rpx solid rgba(177, 203, 229, 0.7);
+  border: 2rpx solid rgba(224, 190, 155, 0.62);
 }
 
 .secondary-btn .action-text {
@@ -388,3 +399,4 @@ export default {
   margin-bottom: 0;
 }
 </style>
+

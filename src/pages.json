@@ -1,4 +1,4 @@
-﻿{
+{
   "pages": [
     {
       "path": "pages/index/index",
@@ -33,7 +33,7 @@
   },
   "tabBar": {
     "color": "#999999",
-    "selectedColor": "#007aff",
+    "selectedColor": "#C46A33",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "fontSize": "14px",
@@ -54,4 +54,5 @@
     ]
   }
 }
+
 
