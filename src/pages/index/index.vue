@@ -3,7 +3,8 @@
     <view class="winter-ornament o1"></view>
     <view class="winter-ornament o2"></view>
     <view class="winter-ornament o3"></view>
-    <view class="content" v-if="!showScanner">
+
+    <view class="content" :class="{ 'content-with-summary': scannedGoodsList.length }" v-if="!showScanner">
       <view class="scan-card">
         <view class="scan-btn-circle" @click="startScan">
           <view class="scan-ring ring-outer"></view>
@@ -12,39 +13,106 @@
             <image class="scan-icon-image" src="/static/icons/camera-soft.svg" mode="aspectFit"></image>
           </view>
         </view>
-        <text class="scan-label">点击开始扫码</text>
+        <text class="scan-label">{{ text.scanLabel }}</text>
       </view>
 
-      <view class="tips-card">
-        <view class="tips-header">
-          <text class="tips-title">扫码小技巧</text>
+      <view v-if="scannedGoodsList.length" class="goods-list">
+        <view
+          v-for="goods in scannedGoodsList"
+          :key="goods.barcode"
+          class="goods-card"
+        >
+          <view class="goods-header">
+            <text class="goods-tag">{{ goods.source === 'custom' ? text.customTag : text.recordedTag }}</text>
+          </view>
+
+          <view class="goods-body">
+            <view class="goods-info">
+              <text class="goods-name">{{ goods.name }}</text>
+              <text class="goods-code">{{ goods.barcode }}</text>
+              <view class="goods-price-row">
+                <view class="goods-qty-stepper">
+                  <view class="goods-qty-btn" @click.stop="decreaseScannedGoods(goods.barcode)">
+                    <text class="goods-qty-btn-text">-</text>
+                  </view>
+                  <text class="goods-qty-value">{{ goods.quantity }}</text>
+                  <view class="goods-qty-btn goods-qty-btn-plus" @click.stop="increaseScannedGoods(goods.barcode)">
+                    <text class="goods-qty-btn-text">+</text>
+                  </view>
+                </view>
+                <text class="goods-price-label">{{ text.priceLabel }}</text>
+                <text class="goods-price">{{ text.priceSymbol }}{{ goods.price }}</text>
+              </view>
+            </view>
+          </view>
         </view>
-        <view class="tip-item">
-          <text class="tip-dot">·</text>
-          <text class="tip-text">请保持商品条码位于识别框内</text>
+      </view>
+    </view>
+
+    <view v-if="!showScanner && scannedGoodsList.length" class="goods-summary-dock">
+      <view class="goods-summary">
+        <view class="summary-main">
+          <view class="summary-copy">
+            <text class="summary-label">已扫商品</text>
+            <text class="summary-count">共 {{ scannedGoodsCount }} 件</text>
+          </view>
+          <view class="summary-total">
+            <text class="summary-total-label">总价</text>
+            <view class="summary-total-amount">
+              <text class="summary-total-currency">￥</text>
+              <text class="summary-total-price">{{ scannedTotalPrice }}</text>
+            </view>
+          </view>
         </view>
-        <view class="tip-item">
-          <text class="tip-dot">·</text>
-          <text class="tip-text">如果画面模糊，可稍微拉远手机距离</text>
+        <view
+          class="summary-action"
+          :class="{ 'summary-action-disabled': checkoutBusy }"
+          @click="checkoutScannedGoods"
+        >
+          <text class="summary-action-text">{{ checkoutBusy ? text.checkoutLoading : text.checkoutButton }}</text>
         </view>
-        <view class="tip-item">
-          <text class="tip-dot">·</text>
-          <text class="tip-text">光线充足时，扫描效果会更稳定</text>
+      </view>
+    </view>
+
+    <view class="editor-mask" v-if="editorVisible">
+      <view class="editor-panel">
+        <view class="editor-head">
+          <view>
+            <text class="editor-title">{{ text.editorTitle }}</text>
+            <text class="editor-subtitle">{{ text.editorSubtitle }}</text>
+          </view>
+          <text class="editor-close" @click="closeEditor">×</text>
         </view>
 
-        <view class="test-codes">
-          <text class="test-title">可供测试的条码</text>
-          <view class="code-row">
-            <text class="code-name">农夫山泉</text>
-            <text class="code-value">6921168511280</text>
+        <view class="editor-form">
+          <view class="editor-field">
+            <text class="field-label">{{ text.barcodeLabel }}</text>
+            <view class="field-box disabled">
+              <text class="field-value">{{ editorCode }}</text>
+            </view>
           </view>
-          <view class="code-row">
-            <text class="code-name">脉动饮料</text>
-            <text class="code-value">6902538004045</text>
+
+          <view class="editor-field">
+            <text class="field-label">{{ text.nameLabel }}</text>
+            <view class="field-box">
+              <input class="field-input" v-model="editorName" maxlength="40" :placeholder="text.namePlaceholder" placeholder-class="field-placeholder" />
+            </view>
           </view>
-          <view class="code-row">
-            <text class="code-name">百事可乐</text>
-            <text class="code-value">6925303711119</text>
+
+          <view class="editor-field">
+            <text class="field-label">{{ text.priceInputLabel }}</text>
+            <view class="field-box">
+              <input class="field-input" v-model="editorPrice" type="digit" maxlength="10" :placeholder="text.pricePlaceholder" placeholder-class="field-placeholder" />
+            </view>
+          </view>
+        </view>
+
+        <view class="editor-actions">
+          <view class="editor-btn primary-btn" @click="saveScannedGoods">
+            <text class="editor-btn-text primary-text">{{ text.saveButton }}</text>
+          </view>
+          <view class="editor-btn secondary-btn" @click="closeEditor">
+            <text class="editor-btn-text secondary-text">{{ text.cancelButton }}</text>
           </view>
         </view>
       </view>
@@ -55,7 +123,7 @@
         <view id="reader" class="reader-view"></view>
         <view class="scanner-footer">
           <view class="cancel-btn" @click="stopScan">
-            <text class="cancel-text">取消扫码</text>
+            <text class="cancel-text">{{ text.cancelScan }}</text>
           </view>
         </view>
       </view>
@@ -63,362 +131,434 @@
   </view>
 </template>
 
-<script>
+<script setup>
+import { computed, nextTick, ref, watch } from 'vue';
+import { getGoodsByBarcode, saveGoods as persistGoods } from '../../utils/goods-store';
+import { saveOrder as persistOrder } from '../../utils/order-store';
+
 // #ifdef H5
 import { Html5Qrcode } from 'html5-qrcode';
 // #endif
 
-export default {
-  data() {
-    return {
-      showScanner: false,
-      html5QrCode: null
-    }
-  },
-  methods: {
-    startScan() {
-      // #ifdef H5
-      this.showScanner = true;
-      this.$nextTick(() => {
-        if (!this.html5QrCode) {
-          this.html5QrCode = new Html5Qrcode('reader');
-        }
-        this.html5QrCode.start(
-          { facingMode: 'environment' },
-          {
-            fps: 15,
-            qrbox: { width: 300, height: 180 }
-          },
-          (decodedText) => {
-            uni.showToast({ title: '已识别条码', icon: 'success' });
-            this.stopScan();
-            this.handleScanResult(decodedText);
-          },
-          () => {}
-        ).catch(() => {
-          uni.showToast({ title: '相机启动失败', icon: 'none' });
-          this.showScanner = false;
-        });
-      });
-      // #endif
+const text = Object.freeze({
+  scanLabel: '点击开始扫码',
+  cancelScan: '取消扫码',
+  scanSuccess: '已识别条码',
+  scanFailed: '相机启动失败',
+  scanLookupFailed: '商品查询失败',
+  recordedTag: '已录入',
+  customTag: '本地商品',
+  priceLabel: '售价',
+  priceSymbol: '￥',
+  notFoundPrompt: '未找到商品，请补充信息',
+  editorTitle: '录入新商品',
+  editorSubtitle: '当前条码未收录，请直接补充商品信息',
+  barcodeLabel: '商品条形码',
+  nameLabel: '商品名称',
+  namePlaceholder: '请输入商品名称',
+  priceInputLabel: '商品售价',
+  pricePlaceholder: '如：3.50',
+  saveButton: '保存商品',
+  cancelButton: '取消',
+  emptyName: '商品名称不能为空',
+  invalidPrice: '请输入有效价格',
+  saveSuccess: '商品已保存',
+  saveFailed: '商品保存失败',
+  checkoutButton: '结算',
+  checkoutLoading: '结算中',
+  checkoutSuccess: '订单已结算',
+  checkoutFailed: '订单结算失败'
+});
 
-      // #ifndef H5
-      uni.scanCode({
-        scanType: ['barCode', 'qrCode'],
-        success: (res) => {
-          this.handleScanResult(res.result);
-        }
-      });
-      // #endif
-    },
-    stopScan() {
-      // #ifdef H5
-      if (this.html5QrCode && this.html5QrCode.isScanning) {
-        this.html5QrCode.stop().then(() => {
-          this.html5QrCode.clear();
-          this.showScanner = false;
-        }).catch(() => {
-          this.showScanner = false;
-        });
-      } else {
-        this.showScanner = false;
-      }
-      // #endif
-    },
-    handleScanResult(barcode) {
-      uni.navigateTo({
-        url: `/pages/result/result?code=${barcode}`
+const showScanner = ref(false);
+const scanBusy = ref(false);
+const scannedGoodsList = ref([]);
+const checkoutBusy = ref(false);
+const scannedGoodsCount = computed(() => {
+  return scannedGoodsList.value.reduce((sum, goods) => sum + normalizeScannedQuantity(goods.quantity), 0);
+});
+const scannedTotalPrice = computed(() => {
+  const total = scannedGoodsList.value.reduce((sum, goods) => {
+    const price = Number.parseFloat(String(goods?.price ?? '').replace(/[^\d.]/g, ''));
+    const quantity = normalizeScannedQuantity(goods.quantity);
+    return Number.isFinite(price) ? sum + (price * quantity) : sum;
+  }, 0);
+
+  return total.toFixed(2);
+});
+
+const editorVisible = ref(false);
+const editorCode = ref('');
+const editorName = ref('');
+const editorPrice = ref('');
+
+watch(editorPrice, (value) => {
+  const normalized = normalizePriceInput(value);
+
+  if (normalized !== value) {
+    editorPrice.value = normalized;
+  }
+});
+
+// #ifdef H5
+const html5QrCode = ref(null);
+const h5ScanConfig = {
+  fps: 15,
+  qrbox: { width: 300, height: 180 }
+};
+// #endif
+
+function resetEditorForm(barcode = '') {
+  editorCode.value = barcode;
+  editorName.value = '';
+  editorPrice.value = '';
+}
+
+function openEditor(barcode) {
+  resetEditorForm(barcode);
+  editorVisible.value = true;
+  uni.showToast({ title: text.notFoundPrompt, icon: 'none' });
+}
+
+function closeEditor() {
+  editorVisible.value = false;
+}
+
+function normalizeScannedQuantity(value) {
+  const quantity = Number.parseInt(String(value ?? '1'), 10);
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+}
+
+function upsertScannedGoods(goods) {
+  const nextGoods = {
+    ...goods,
+    barcode: String(goods?.barcode || '').trim(),
+    quantity: normalizeScannedQuantity(goods?.quantity)
+  };
+
+  if (!nextGoods.barcode) {
+    return;
+  }
+
+  const existingIndex = scannedGoodsList.value.findIndex((item) => item.barcode === nextGoods.barcode);
+
+  if (existingIndex === -1) {
+    scannedGoodsList.value = [...scannedGoodsList.value, nextGoods];
+    return;
+  }
+
+  const nextList = [...scannedGoodsList.value];
+  nextList[existingIndex] = {
+    ...nextList[existingIndex],
+    ...nextGoods
+  };
+  nextList[existingIndex].quantity =
+    normalizeScannedQuantity(scannedGoodsList.value[existingIndex]?.quantity) + nextGoods.quantity;
+  scannedGoodsList.value = nextList;
+}
+
+function increaseScannedGoods(barcode) {
+  scannedGoodsList.value = scannedGoodsList.value.map((item) => {
+    if (item.barcode !== barcode) {
+      return item;
+    }
+
+    return {
+      ...item,
+      quantity: normalizeScannedQuantity(item.quantity) + 1
+    };
+  });
+}
+
+function decreaseScannedGoods(barcode) {
+  const nextList = [];
+
+  scannedGoodsList.value.forEach((item) => {
+    if (item.barcode !== barcode) {
+      nextList.push(item);
+      return;
+    }
+
+    const nextQuantity = normalizeScannedQuantity(item.quantity) - 1;
+
+    if (nextQuantity > 0) {
+      nextList.push({
+        ...item,
+        quantity: nextQuantity
       });
     }
+  });
+
+  scannedGoodsList.value = nextList;
+}
+
+function normalizePriceInput(value) {
+  let next = String(value ?? '').replace(/[^\d.]/g, '');
+  const dotIndex = next.indexOf('.');
+
+  if (dotIndex !== -1) {
+    next = next.slice(0, dotIndex + 1) + next.slice(dotIndex + 1).replace(/\./g, '');
+  }
+
+  if (next.startsWith('.')) {
+    next = `0${next}`;
+  }
+
+  const parts = next.split('.');
+
+  if (parts[1] !== undefined) {
+    next = `${parts[0]}.${parts[1].slice(0, 2)}`;
+  }
+
+  return next.slice(0, 10);
+}
+
+function normalizePriceForSave(value) {
+  const normalized = normalizePriceInput(value).replace(/\.$/, '');
+
+  if (!normalized) {
+    return '';
+  }
+
+  const num = Number(normalized);
+
+  if (!Number.isFinite(num) || num < 0) {
+    return '';
+  }
+
+  return num.toFixed(2);
+}
+
+async function handleScanResult(barcode) {
+  const scannedCode = String(barcode || '').trim();
+
+  if (!scannedCode) {
+    return;
+  }
+
+  try {
+    const goods = await getGoodsByBarcode(scannedCode);
+
+    if (goods) {
+      upsertScannedGoods(goods);
+      closeEditor();
+      return;
+    }
+
+    openEditor(scannedCode);
+  } catch (error) {
+    uni.showToast({ title: text.scanLookupFailed, icon: 'none' });
+  }
+}
+
+async function stopScan() {
+  // #ifdef H5
+  if (html5QrCode.value && html5QrCode.value.isScanning) {
+    try {
+      await html5QrCode.value.stop();
+      html5QrCode.value.clear();
+    } catch (error) {
+      // ignore scanner shutdown errors and close the overlay anyway
+    }
+  }
+  // #endif
+
+  showScanner.value = false;
+}
+
+function startScan() {
+  // #ifdef H5
+  showScanner.value = true;
+  nextTick(() => {
+    if (!html5QrCode.value) {
+      html5QrCode.value = new Html5Qrcode('reader');
+    }
+
+    html5QrCode.value.start(
+      { facingMode: 'environment' },
+      h5ScanConfig,
+      async (decodedText) => {
+        if (scanBusy.value) {
+          return;
+        }
+
+        scanBusy.value = true;
+        uni.showToast({ title: text.scanSuccess, icon: 'success' });
+
+        try {
+          await stopScan();
+          await handleScanResult(decodedText);
+        } finally {
+          scanBusy.value = false;
+        }
+      },
+      () => {}
+    ).catch(() => {
+      uni.showToast({ title: text.scanFailed, icon: 'none' });
+      showScanner.value = false;
+    });
+  });
+  // #endif
+
+  // #ifndef H5
+  uni.scanCode({
+    scanType: ['barCode', 'qrCode'],
+    success: async (res) => {
+      if (scanBusy.value) {
+        return;
+      }
+
+      scanBusy.value = true;
+
+      try {
+        await handleScanResult(res.result);
+      } finally {
+        scanBusy.value = false;
+      }
+    }
+  });
+  // #endif
+}
+
+async function saveScannedGoods() {
+  const normalizedName = (editorName.value || '').trim();
+  const normalizedPrice = normalizePriceForSave(editorPrice.value);
+
+  if (!normalizedName) {
+    return uni.showToast({ title: text.emptyName, icon: 'none' });
+  }
+
+  if (!normalizedPrice) {
+    return uni.showToast({ title: text.invalidPrice, icon: 'none' });
+  }
+
+  editorName.value = normalizedName;
+  editorPrice.value = normalizedPrice;
+
+  try {
+    await persistGoods({
+      barcode: editorCode.value,
+      name: normalizedName,
+      price: normalizedPrice,
+      image: ''
+    });
+
+    upsertScannedGoods({
+      barcode: editorCode.value,
+      name: normalizedName,
+      price: normalizedPrice,
+      image: '',
+      source: 'custom'
+    });
+    editorVisible.value = false;
+    uni.showToast({ title: text.saveSuccess, icon: 'success' });
+  } catch (error) {
+    uni.showToast({ title: text.saveFailed, icon: 'none' });
+  }
+}
+
+async function checkoutScannedGoods() {
+  if (checkoutBusy.value || scannedGoodsList.value.length === 0) {
+    return;
+  }
+
+  checkoutBusy.value = true;
+
+  try {
+    await persistOrder({
+      items: scannedGoodsList.value,
+      itemCount: scannedGoodsCount.value,
+      totalPrice: scannedTotalPrice.value
+    });
+
+    scannedGoodsList.value = [];
+    uni.showToast({ title: text.checkoutSuccess, icon: 'success' });
+    setTimeout(() => {
+      uni.switchTab({ url: '/pages/orders/orders' });
+    }, 280);
+  } catch (error) {
+    uni.showToast({ title: text.checkoutFailed, icon: 'none' });
+  } finally {
+    checkoutBusy.value = false;
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.container {
-  background:
-    linear-gradient(180deg, #f7e7d7 0%, #f8efe5 45%, #fff8f0 100%);
-  min-height: 100vh;
-  overflow: hidden;
-  position: relative;
-}
-
-.winter-ornament {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 247, 238, 0.6);
-  border: 1rpx solid rgba(222, 181, 143, 0.55);
-  backdrop-filter: blur(8rpx);
-}
-
-.o1 {
-  width: 200rpx;
-  height: 200rpx;
-  top: -40rpx;
-  left: -60rpx;
-}
-
-.o2 {
-  width: 120rpx;
-  height: 120rpx;
-  top: 120rpx;
-  right: 40rpx;
-}
-
-.o3 {
-  width: 160rpx;
-  height: 160rpx;
-  top: 420rpx;
-  right: -40rpx;
-}
-
-.content {
-  padding: 30rpx;
-  position: relative;
-  z-index: 2;
-}
-
-.scan-card {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 30%),
-    linear-gradient(145deg, rgba(255, 251, 246, 0.98), rgba(248, 236, 222, 0.94));
-  border-radius: 30rpx;
-  padding: 60rpx 40rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1rpx solid rgba(224, 190, 155, 0.42);
-  box-shadow:
-    0 18rpx 44rpx rgba(152, 104, 68, 0.12),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.9);
-}
-
-.scan-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 26rpx;
-  right: 26rpx;
-  height: 8rpx;
-  border-radius: 0 0 999rpx 999rpx;
-  background: rgba(248, 236, 222, 0.94);
-}
-
-.scan-card::after {
-  content: '';
-  position: absolute;
-  width: 180rpx;
-  height: 180rpx;
-  top: -70rpx;
-  right: -50rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 204, 168, 0.42) 0%, rgba(245, 204, 168, 0) 70%);
-}
-
-.scan-btn-circle {
-  position: relative;
-  width: 220rpx;
-  height: 220rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.scan-ring {
-  position: absolute;
-  border-radius: 50%;
-  border: 4rpx solid rgba(210, 149, 95, 0.28);
-}
-
-.ring-outer {
-  width: 220rpx;
-  height: 220rpx;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.ring-inner {
-  width: 180rpx;
-  height: 180rpx;
-  border-color: rgba(242, 204, 170, 0.9);
-  animation: pulse 2s ease-in-out 0.3s infinite;
-}
-
-.scan-icon-box {
-  width: 140rpx;
-  height: 140rpx;
-  background: linear-gradient(135deg, #fff7ef 0%, #f9dec2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10rpx 30rpx rgba(180, 118, 67, 0.18);
-  z-index: 2;
-}
-
-.scan-icon-image {
-  width: 68rpx;
-  height: 68rpx;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.15);
-    opacity: 0.5;
-  }
-}
-
-.scan-label {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #7c4627;
-  margin-top: 30rpx;
-}
-
-
-.tips-card {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.96), transparent 32%),
-    linear-gradient(160deg, rgba(255, 251, 247, 0.98), rgba(249, 239, 229, 0.95));
-  border-radius: 24rpx;
-  padding: 40rpx;
-  margin-top: 30rpx;
-  border: 1rpx solid rgba(224, 190, 155, 0.38);
-  box-shadow:
-    0 14rpx 32rpx rgba(152, 104, 68, 0.1),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.88);
-}
-
-.tips-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0, rgba(255, 255, 255, 0.18) 8rpx, transparent 8rpx, transparent 28rpx);
-  opacity: 0.22;
-  pointer-events: none;
-}
-
-.tips-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-
-.tips-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #7c4627;
-}
-
-.tip-item {
-  display: flex;
-  align-items: center;
-  padding: 12rpx 0;
-}
-
-.tip-dot {
-  color: #d88b50;
-  font-size: 32rpx;
-  margin-right: 14rpx;
-  font-weight: bold;
-}
-
-.tip-text {
-  font-size: 26rpx;
-  color: #967256;
-}
-
-.test-codes {
-  margin-top: 30rpx;
-  padding: 24rpx;
-  background: linear-gradient(135deg, #fff6ee 0%, #f8eadc 100%);
-  border-radius: 16rpx;
-}
-
-.test-title {
-  font-size: 26rpx;
-  font-weight: bold;
-  color: #b56834;
-  margin-bottom: 16rpx;
-  display: block;
-}
-
-.code-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10rpx 0;
-  border-bottom: 1rpx dashed rgba(210, 149, 95, 0.24);
-}
-
-.code-row:last-child {
-  border-bottom: none;
-}
-
-.code-name {
-  font-size: 24rpx;
-  color: #8b684d;
-  font-weight: 500;
-}
-
-.code-value {
-  font-size: 24rpx;
-  color: #a45a2f;
-  font-family: monospace;
-}
-
-.scanner-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(56, 35, 24, 0.84);
-  z-index: 9999;
-}
-
-.scanner-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 40rpx;
-}
-
-.reader-view {
-  width: 100%;
-  aspect-ratio: 1;
-  background-color: #000;
-  border-radius: 20rpx;
-  overflow: hidden;
-  box-shadow: 0 0 60rpx rgba(210, 149, 95, 0.28);
-}
-
-.scanner-footer {
-  margin-top: 60rpx;
-}
-
-.cancel-btn {
-  background: linear-gradient(135deg, #e6a76d 0%, #c46a33 100%);
-  padding: 20rpx 60rpx;
-  border-radius: 50rpx;
-}
-
-.cancel-text {
-  color: #fff;
-  font-size: 30rpx;
-  font-weight: bold;
-}
+.container { background: linear-gradient(180deg, #f7e7d7 0%, #f8efe5 45%, #fff8f0 100%); min-height: 100vh; overflow: hidden; position: relative; }
+.winter-ornament { position: absolute; border-radius: 50%; background: rgba(255, 247, 238, 0.6); border: 1rpx solid rgba(222, 181, 143, 0.55); backdrop-filter: blur(8rpx); }
+.o1 { width: 200rpx; height: 200rpx; top: -40rpx; left: -60rpx; }
+.o2 { width: 120rpx; height: 120rpx; top: 120rpx; right: 40rpx; }
+.o3 { width: 160rpx; height: 160rpx; top: 420rpx; right: -40rpx; }
+.content { padding: 30rpx; position: relative; z-index: 2; }
+.content-with-summary { padding-bottom: calc(340rpx + var(--window-bottom, 0px)); }
+.scan-card { position: relative; overflow: hidden; background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 30%), linear-gradient(145deg, rgba(255, 251, 246, 0.98), rgba(248, 236, 222, 0.94)); border-radius: 30rpx; padding: 60rpx 40rpx; display: flex; flex-direction: column; align-items: center; border: 1rpx solid rgba(224, 190, 155, 0.42); box-shadow: 0 18rpx 44rpx rgba(152, 104, 68, 0.12), inset 0 1rpx 0 rgba(255, 255, 255, 0.9); }
+.scan-card::before { content: ''; position: absolute; top: 0; left: 26rpx; right: 26rpx; height: 8rpx; border-radius: 0 0 999rpx 999rpx; background: rgba(248, 236, 222, 0.94); }
+.scan-card::after { content: ''; position: absolute; width: 180rpx; height: 180rpx; top: -70rpx; right: -50rpx; border-radius: 50%; background: radial-gradient(circle, rgba(245, 204, 168, 0.42) 0%, rgba(245, 204, 168, 0) 70%); }
+.scan-btn-circle { position: relative; width: 220rpx; height: 220rpx; display: flex; align-items: center; justify-content: center; }
+.scan-ring { position: absolute; border-radius: 50%; border: 4rpx solid rgba(210, 149, 95, 0.28); }
+.ring-outer { width: 220rpx; height: 220rpx; animation: pulse 2s ease-in-out infinite; }
+.ring-inner { width: 180rpx; height: 180rpx; border-color: rgba(242, 204, 170, 0.9); animation: pulse 2s ease-in-out 0.3s infinite; }
+.scan-icon-box { width: 140rpx; height: 140rpx; background: linear-gradient(135deg, #fff7ef 0%, #f9dec2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10rpx 30rpx rgba(180, 118, 67, 0.18); z-index: 2; }
+.scan-icon-image { width: 68rpx; height: 68rpx; }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.5; } }
+.scan-label { font-size: 34rpx; font-weight: bold; color: #7c4627; margin-top: 30rpx; }
+.goods-list { margin-top: 28rpx; display: flex; flex-direction: column; gap: 20rpx; }
+.goods-summary-dock { position: fixed; left: 0; right: 0; bottom: calc(var(--window-bottom, 0px) + env(safe-area-inset-bottom)); padding: 0 30rpx 24rpx; z-index: 20; pointer-events: none; }
+.goods-summary { background: linear-gradient(145deg, rgba(124, 70, 39, 0.96), rgba(163, 95, 54, 0.96)); border-radius: 28rpx; padding: 26rpx 30rpx; display: flex; flex-direction: column; gap: 22rpx; box-shadow: 0 14rpx 32rpx rgba(124, 70, 39, 0.18); pointer-events: auto; }
+.summary-main { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.summary-copy { display: flex; flex-direction: column; gap: 8rpx; }
+.summary-label { font-size: 24rpx; color: rgba(255, 243, 230, 0.82); }
+.summary-count { font-size: 34rpx; font-weight: 700; color: #fff7ee; }
+.summary-total { display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
+.summary-total-label { font-size: 24rpx; color: rgba(255, 243, 230, 0.82); }
+.summary-total-amount { min-width: 180rpx; display: flex; align-items: baseline; justify-content: flex-end; gap: 6rpx; white-space: nowrap; }
+.summary-total-currency { font-size: 28rpx; line-height: 1; font-weight: 700; color: #fff; }
+.summary-total-price { display: block; font-size: 42rpx; line-height: 1; font-weight: 700; color: #fff; }
+.summary-action { height: 84rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.16); border: 1rpx solid rgba(255, 255, 255, 0.24); }
+.summary-action-disabled { opacity: 0.68; }
+.summary-action-text { font-size: 30rpx; font-weight: 700; color: #fff; }
+.goods-card { position: relative; background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.96), transparent 34%), linear-gradient(150deg, rgba(255, 251, 247, 0.98), rgba(248, 236, 222, 0.94)); border-radius: 28rpx; padding: 24rpx 30rpx 28rpx; border: 1rpx solid rgba(224, 190, 155, 0.36); box-shadow: 0 14rpx 32rpx rgba(152, 104, 68, 0.11), inset 0 1rpx 0 rgba(255, 255, 255, 0.88); }
+.goods-header { position: absolute; top: 20rpx; right: 24rpx; display: flex; align-items: center; justify-content: flex-end; }
+.goods-tag { padding: 10rpx 18rpx; border-radius: 999rpx; background: rgba(196, 106, 51, 0.14); color: #b35f2e; font-size: 22rpx; }
+.goods-body { display: block; }
+.goods-info { display: flex; flex-direction: column; padding-right: 170rpx; }
+.goods-name { font-size: 34rpx; font-weight: 700; color: #4f321f; line-height: 1.28; }
+.goods-code { margin-top: 8rpx; font-size: 22rpx; color: #9a7559; font-family: monospace; }
+.goods-price-row { margin-top: 12rpx; display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; }
+.goods-qty-stepper { display: flex; align-items: center; gap: 10rpx; padding: 6rpx; border-radius: 999rpx; background: rgba(198, 109, 53, 0.08); }
+.goods-qty-btn { min-width: 68rpx; height: 48rpx; padding: 0 16rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.92); border: 1rpx solid rgba(198, 109, 53, 0.16); }
+.goods-qty-btn-plus { background: linear-gradient(135deg, #fff3e7, #f5ddc6); }
+.goods-qty-btn-text { font-size: 22rpx; font-weight: 700; color: #b35f2e; }
+.goods-qty-value { min-width: 28rpx; text-align: center; font-size: 24rpx; font-weight: 700; color: #7c4627; }
+.goods-price-label { font-size: 24rpx; color: #b08a6f; }
+.goods-price { font-size: 46rpx; font-weight: 700; color: #b35f2e; }
+.editor-mask { position: fixed; inset: 0; background: rgba(62, 38, 24, 0.4); backdrop-filter: blur(6rpx); display: flex; align-items: center; justify-content: center; padding: 30rpx; z-index: 9998; }
+.editor-panel { width: 100%; max-width: 680rpx; max-height: 90vh; overflow: auto; background: linear-gradient(160deg, rgba(255, 251, 247, 0.99), rgba(248, 236, 222, 0.96)); border-radius: 30rpx; padding: 34rpx; border: 1rpx solid rgba(224, 190, 155, 0.42); box-shadow: 0 24rpx 60rpx rgba(90, 53, 27, 0.18); }
+.editor-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24rpx; }
+.editor-title { display: block; font-size: 34rpx; font-weight: 700; color: #6f3d23; }
+.editor-subtitle { display: block; margin-top: 10rpx; font-size: 24rpx; line-height: 1.5; color: #9a7559; }
+.editor-close { font-size: 42rpx; line-height: 1; color: #b18163; padding: 4rpx 8rpx; }
+.editor-form { margin-top: 28rpx; }
+.editor-field { margin-bottom: 26rpx; }
+.field-head { display: flex; align-items: center; gap: 10rpx; }
+.field-label { display: block; margin-bottom: 12rpx; font-size: 28rpx; font-weight: 600; color: #4f321f; }
+.field-box { background: #fff5ec; border-radius: 18rpx; padding: 20rpx 22rpx; }
+.field-box.disabled { opacity: 0.72; }
+.field-value { font-size: 28rpx; color: #9a7559; font-family: monospace; }
+.field-input { width: 100%; height: 44rpx; font-size: 28rpx; color: #333; }
+.field-placeholder { color: #ba977d; }
+.editor-actions { margin-top: 18rpx; display: flex; flex-direction: column; gap: 18rpx; }
+.editor-btn { height: 92rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; }
+.primary-btn { background: linear-gradient(135deg, #e1a367 0%, #be6730 100%); box-shadow: 0 10rpx 22rpx rgba(190, 103, 48, 0.24); }
+.secondary-btn { background: rgba(255, 255, 255, 0.92); border: 2rpx solid rgba(224, 190, 155, 0.62); }
+.editor-btn-text { font-size: 30rpx; font-weight: 700; }
+.primary-text { color: #fff; }
+.secondary-text { color: #8e6d56; }
+.scanner-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(56, 35, 24, 0.84); z-index: 9999; }
+.scanner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40rpx; }
+.reader-view { width: 100%; aspect-ratio: 1; background-color: #000; border-radius: 20rpx; overflow: hidden; box-shadow: 0 0 60rpx rgba(210, 149, 95, 0.28); }
+.scanner-footer { margin-top: 60rpx; }
+.cancel-btn { background: linear-gradient(135deg, #e6a76d 0%, #c46a33 100%); padding: 20rpx 60rpx; border-radius: 50rpx; }
+.cancel-text { color: #fff; font-size: 30rpx; font-weight: bold; }
 </style>
-
-
-

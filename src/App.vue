@@ -1,9 +1,9 @@
-<script>
-export default {}
+<script setup>
+const appReady = true;
 </script>
 
 <style>
-/* 每个页面公共 css */
+/* global page styles */
 * {
   box-sizing: border-box;
 }
@@ -13,4 +13,3 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;
 }
 </style>
-
