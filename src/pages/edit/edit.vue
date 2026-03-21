@@ -43,31 +43,13 @@
           </view>
         </view>
 
-        <view class="form-item" v-if="!isEditing">
-          <view class="label-row">
-            <text class="label-text">{{ text.imageLabel }}</text>
-            <text class="optional">{{ text.optional }}</text>
-          </view>
-          <view class="img-area">
-            <view v-if="image" class="preview-wrap" @click="chooseImage">
-              <image class="preview-img" :src="image" mode="aspectFill"></image>
-              <view class="change-badge">
-                <text class="change-text">{{ text.changeImage }}</text>
-              </view>
-            </view>
-            <view v-else class="upload-box" @click="chooseImage">
-              <text class="upload-icon">{{ text.uploadIcon }}</text>
-              <text class="upload-hint">{{ text.imageHint }}</text>
-            </view>
-          </view>
-        </view>
       </view>
 
       <view class="submit-area">
         <view class="submit-btn" @click="saveGoods">
           <text class="submit-text">{{ isEditing ? text.saveEditButton : text.saveButton }}</text>
         </view>
-        <view v-if="isEditing" class="delete-btn" @click="confirmDeleteGoods">
+        <view v-if="isEditing && canDelete" class="delete-btn" @click="confirmDeleteGoods">
           <text class="delete-text">{{ text.deleteButton }}</text>
         </view>
         <view class="cancel-btn" @click="goBack">
@@ -94,11 +76,6 @@ const text = Object.freeze({
   namePlaceholder: '请输入商品名称',
   priceLabel: '商品售价',
   pricePlaceholder: '如：3.50',
-  imageLabel: '商品图片',
-  optional: '(选填)',
-  uploadIcon: '+',
-  changeImage: '更换图片',
-  imageHint: '拍照或从相册选择',
   saveButton: '保存到商品库',
   saveEditButton: '保存修改',
   cancelButton: '取消返回',
@@ -110,6 +87,7 @@ const text = Object.freeze({
   deleteSuccess: '商品已删除',
   deleteFailed: '删除失败',
   loadFailed: '读取商品失败',
+  missingBarcode: '未获取到商品条码',
   emptyName: '商品名称不能为空',
   invalidPrice: '请输入有效价格',
   saveSuccess: '保存成功',
@@ -119,8 +97,8 @@ const text = Object.freeze({
 const code = ref('');
 const name = ref('');
 const price = ref('');
-const image = ref('');
 const isEditing = ref(false);
+const canDelete = ref(false);
 
 watch(price, (value) => {
   const normalized = normalizePriceInput(value);
@@ -180,30 +158,24 @@ async function loadSavedGoods() {
 
     if (!savedItem) {
       isEditing.value = false;
+      canDelete.value = false;
       return;
     }
 
     isEditing.value = true;
+    canDelete.value = savedItem.source === 'custom';
     name.value = savedItem.name || '';
     price.value = normalizePriceInput(savedItem.price || '');
-    image.value = savedItem.image || '';
   } catch (error) {
     uni.showToast({ title: text.loadFailed, icon: 'none' });
   }
 }
 
-function chooseImage() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: (res) => {
-      image.value = res.tempFilePaths[0];
-    }
-  });
-}
-
 async function saveGoods() {
+  if (!code.value) {
+    return uni.showToast({ title: text.missingBarcode, icon: 'none' });
+  }
+
   const normalizedName = (name.value || '').trim();
   const normalizedPrice = normalizePriceForSave(price.value);
 
@@ -222,8 +194,7 @@ async function saveGoods() {
     await persistGoods({
       barcode: code.value,
       name: normalizedName,
-      price: normalizedPrice,
-      image: image.value || ''
+      price: normalizedPrice
     });
 
     uni.showToast({ title: text.saveSuccess, icon: 'success' });
@@ -234,7 +205,7 @@ async function saveGoods() {
 }
 
 function confirmDeleteGoods() {
-  if (!isEditing.value || !code.value) {
+  if (!isEditing.value || !canDelete.value || !code.value) {
     return;
   }
 
@@ -249,7 +220,12 @@ function confirmDeleteGoods() {
       }
 
       try {
-        await removeGoods(code.value);
+        const deleted = await removeGoods(code.value);
+
+        if (!deleted) {
+          throw new Error('goods-not-deleted');
+        }
+
         uni.showToast({ title: text.deleteSuccess, icon: 'success' });
         setTimeout(() => uni.navigateBack(), 600);
       } catch (error) {
@@ -285,21 +261,12 @@ function goBack() {
 .label-row { display: flex; align-items: center; margin-bottom: 14rpx; }
 .label-text { font-size: 28rpx; color: #333; font-weight: 600; }
 .required { color: #ff3b30; font-size: 28rpx; margin-left: 6rpx; }
-.optional { color: #b08a6f; font-size: 24rpx; margin-left: 8rpx; }
 .input-box { background: #fff5ec; padding: 20rpx 24rpx; border-radius: 16rpx; }
 .input-box.disabled { opacity: 0.7; }
 .input-value { font-size: 30rpx; color: #999; font-family: monospace; }
 .input-shell { background: #fff5ec; border-radius: 16rpx; padding: 20rpx 24rpx; }
 .native-input { width: 100%; height: 44rpx; font-size: 30rpx; color: #333; }
 .input-placeholder { color: #ba977d; }
-.img-area { margin-top: 4rpx; }
-.upload-box { width: 240rpx; height: 240rpx; background: linear-gradient(135deg, #fff8f1, #f7e7d7); border: 3rpx dashed #e1b792; border-radius: 20rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.upload-icon { font-size: 56rpx; margin-bottom: 10rpx; color: #c5763c; line-height: 1; }
-.upload-hint { font-size: 22rpx; color: #a7856b; }
-.preview-wrap { position: relative; width: 240rpx; height: 240rpx; border-radius: 20rpx; overflow: hidden; box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08); }
-.preview-img { width: 100%; height: 100%; }
-.change-badge { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); padding: 10rpx 0; text-align: center; }
-.change-text { color: #fff; font-size: 22rpx; }
 .submit-area { margin-top: 50rpx; }
 .submit-btn { background: linear-gradient(135deg, #e1a367 0%, #be6730 100%); height: 100rpx; border-radius: 50rpx; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 25rpx rgba(190, 103, 48, 0.26); margin-bottom: 24rpx; }
 .submit-btn:active { transform: scale(0.97); }

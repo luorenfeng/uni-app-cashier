@@ -4,13 +4,18 @@
     <view class="winter-ornament o2"></view>
     <view class="winter-ornament o3"></view>
 
-    <view class="content" :class="{ 'content-with-summary': scannedGoodsList.length }" v-if="!showScanner">
+    <view class="content" :class="{ 'content-with-summary': scannedGoodsList.length }">
       <view class="scan-card">
         <view class="scan-btn-circle" @click="startScan">
           <view class="scan-ring ring-outer"></view>
           <view class="scan-ring ring-inner"></view>
           <view class="scan-icon-box">
-            <image class="scan-icon-image" src="/static/icons/camera-soft.svg" mode="aspectFit"></image>
+            <view class="scan-camera-icon">
+              <view class="scan-camera-top"></view>
+              <view class="scan-camera-body">
+                <view class="scan-camera-lens"></view>
+              </view>
+            </view>
           </view>
         </view>
         <text class="scan-label">{{ text.scanLabel }}</text>
@@ -25,23 +30,25 @@
           <view class="goods-header">
             <text class="goods-tag">{{ goods.source === 'custom' ? text.customTag : text.recordedTag }}</text>
           </view>
+          <view class="goods-qty-stepper goods-qty-stepper-floating">
+            <view class="goods-qty-btn" @click.stop="decreaseScannedGoods(goods.barcode)">
+              <text class="goods-qty-btn-text">-</text>
+            </view>
+            <text class="goods-qty-value">{{ goods.quantity }}</text>
+            <view class="goods-qty-btn goods-qty-btn-plus" @click.stop="increaseScannedGoods(goods.barcode)">
+              <text class="goods-qty-btn-text">+</text>
+            </view>
+          </view>
 
           <view class="goods-body">
             <view class="goods-info">
               <text class="goods-name">{{ goods.name }}</text>
               <text class="goods-code">{{ goods.barcode }}</text>
               <view class="goods-price-row">
-                <view class="goods-qty-stepper">
-                  <view class="goods-qty-btn" @click.stop="decreaseScannedGoods(goods.barcode)">
-                    <text class="goods-qty-btn-text">-</text>
-                  </view>
-                  <text class="goods-qty-value">{{ goods.quantity }}</text>
-                  <view class="goods-qty-btn goods-qty-btn-plus" @click.stop="increaseScannedGoods(goods.barcode)">
-                    <text class="goods-qty-btn-text">+</text>
-                  </view>
+                <view class="goods-price-box">
+                  <text class="goods-price-label">{{ text.priceLabel }}</text>
+                  <text class="goods-price">{{ text.priceSymbol }}{{ goods.price }}</text>
                 </view>
-                <text class="goods-price-label">{{ text.priceLabel }}</text>
-                <text class="goods-price">{{ text.priceSymbol }}{{ goods.price }}</text>
               </view>
             </view>
           </view>
@@ -118,34 +125,28 @@
       </view>
     </view>
 
-    <view class="scanner-overlay" v-if="showScanner">
-      <view class="scanner-wrap">
-        <view id="reader" class="reader-view"></view>
-        <view class="scanner-footer">
-          <view class="cancel-btn" @click="stopScan">
-            <text class="cancel-text">{{ text.cancelScan }}</text>
-          </view>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { getGoodsByBarcode, saveGoods as persistGoods } from '../../utils/goods-store';
 import { saveOrder as persistOrder } from '../../utils/order-store';
 
-// #ifdef H5
-import { Html5Qrcode } from 'html5-qrcode';
-// #endif
-
 const text = Object.freeze({
   scanLabel: '点击开始扫码',
-  cancelScan: '取消扫码',
   scanSuccess: '已识别条码',
   scanFailed: '相机启动失败',
   scanLookupFailed: '商品查询失败',
+  unsupportedBarcode: '仅支持69开头的商品条码，请继续扫描',
+  cameraPermissionDenied: '未获得相机权限，无法开始扫码',
+  cameraPermissionTitle: '需要相机权限',
+  cameraPermissionContent: '扫码功能需要使用相机，请授权后继续。',
+  cameraPermissionRetryConfirm: '继续授权',
+  cameraPermissionSettingsContent: '相机权限已被永久拒绝，请前往系统设置重新开启后继续扫码。',
+  cameraPermissionSettingsConfirm: '去设置',
+  cameraPermissionCancel: '取消',
+  cameraPermissionSettingsFailed: '无法打开系统设置',
   recordedTag: '已录入',
   customTag: '本地商品',
   priceLabel: '售价',
@@ -164,16 +165,17 @@ const text = Object.freeze({
   invalidPrice: '请输入有效价格',
   saveSuccess: '商品已保存',
   saveFailed: '商品保存失败',
+  invalidBarcode: '条码识别不完整，请对准条形码重新扫描',
   checkoutButton: '结算',
   checkoutLoading: '结算中',
   checkoutSuccess: '订单已结算',
   checkoutFailed: '订单结算失败'
 });
 
-const showScanner = ref(false);
 const scanBusy = ref(false);
 const scannedGoodsList = ref([]);
 const checkoutBusy = ref(false);
+const lastScanHintAt = ref(0);
 const scannedGoodsCount = computed(() => {
   return scannedGoodsList.value.reduce((sum, goods) => sum + normalizeScannedQuantity(goods.quantity), 0);
 });
@@ -200,13 +202,10 @@ watch(editorPrice, (value) => {
   }
 });
 
-// #ifdef H5
-const html5QrCode = ref(null);
-const h5ScanConfig = {
-  fps: 15,
-  qrbox: { width: 300, height: 180 }
-};
-// #endif
+const SUPPORTED_BARCODE_PREFIX = '69';
+const ANDROID_CAMERA_PERMISSION = 'android.permission.CAMERA';
+const SCAN_RETRY_DELAY = 180;
+const SCAN_HINT_THROTTLE_MS = 1200;
 
 function resetEditorForm(barcode = '') {
   editorCode.value = barcode;
@@ -227,6 +226,176 @@ function closeEditor() {
 function normalizeScannedQuantity(value) {
   const quantity = Number.parseInt(String(value ?? '1'), 10);
   return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+}
+
+function waitForPlusReady() {
+  return new Promise((resolve) => {
+    if (typeof plus !== 'undefined') {
+      resolve();
+      return;
+    }
+
+    const onReady = () => {
+      document.removeEventListener('plusready', onReady);
+      resolve();
+    };
+
+    document.addEventListener('plusready', onReady, false);
+  });
+}
+
+function showScanHint(message) {
+  const now = Date.now();
+
+  if (now - lastScanHintAt.value < SCAN_HINT_THROTTLE_MS) {
+    return;
+  }
+
+  lastScanHintAt.value = now;
+  uni.showToast({ title: message, icon: 'none' });
+}
+
+function normalizeBarcodeForLookup(value) {
+  const digits = String(value ?? '').replace(/\s+/g, '').replace(/[^\d]/g, '');
+  const lookupCandidates = new Set();
+  let primaryCode = digits;
+
+  if (digits.length === 12) {
+    primaryCode = `0${digits}`;
+    lookupCandidates.add(primaryCode);
+    lookupCandidates.add(digits);
+  } else if (digits.length === 13) {
+    lookupCandidates.add(digits);
+
+    if (digits.startsWith('0')) {
+      lookupCandidates.add(digits.slice(1));
+    }
+  } else if (digits.length === 14) {
+    primaryCode = digits.slice(1);
+    lookupCandidates.add(primaryCode);
+  } else if (digits.length === 8) {
+    lookupCandidates.add(digits);
+  }
+
+  return {
+    primaryCode,
+    lookupCandidates: Array.from(lookupCandidates),
+    isValid: lookupCandidates.size > 0
+  };
+}
+
+function requestAndroidPermissions(permissions) {
+  return new Promise((resolve, reject) => {
+    plus.android.requestPermissions(
+      permissions,
+      (event) => resolve(event || {}),
+      (error) => reject(error)
+    );
+  });
+}
+
+function openAndroidAppSettings() {
+  try {
+    const mainActivity = plus.android.runtimeMainActivity();
+    const Intent = plus.android.importClass('android.content.Intent');
+    const Settings = plus.android.importClass('android.provider.Settings');
+    const Uri = plus.android.importClass('android.net.Uri');
+    const intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+
+    intent.setData(Uri.parse(`package:${mainActivity.getPackageName()}`));
+    mainActivity.startActivity(intent);
+  } catch (error) {
+    uni.showToast({ title: text.cameraPermissionSettingsFailed, icon: 'none' });
+  }
+}
+
+function promptOpenCameraSettings() {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: text.cameraPermissionTitle,
+      content: text.cameraPermissionSettingsContent,
+      confirmText: text.cameraPermissionSettingsConfirm,
+      cancelText: text.cameraPermissionCancel,
+      success: (res) => {
+        if (res.confirm) {
+          openAndroidAppSettings();
+        }
+
+        resolve(false);
+      },
+      fail: () => resolve(false)
+    });
+  });
+}
+
+async function ensureCameraPermission() {
+  await waitForPlusReady();
+
+  if (plus.os.name !== 'Android') {
+    return true;
+  }
+
+  try {
+    const result = await requestAndroidPermissions([ANDROID_CAMERA_PERMISSION]);
+
+    if ((result.granted || []).includes(ANDROID_CAMERA_PERMISSION)) {
+      return true;
+    }
+
+    if ((result.deniedAlways || []).includes(ANDROID_CAMERA_PERMISSION)) {
+      return promptOpenCameraSettings();
+    }
+
+    if ((result.deniedPresent || []).includes(ANDROID_CAMERA_PERMISSION)) {
+      const shouldRetry = await new Promise((resolve) => {
+        uni.showModal({
+          title: text.cameraPermissionTitle,
+          content: text.cameraPermissionContent,
+          confirmText: text.cameraPermissionRetryConfirm,
+          cancelText: text.cameraPermissionCancel,
+          success: (res) => resolve(Boolean(res.confirm)),
+          fail: () => resolve(false)
+        });
+      });
+
+      if (!shouldRetry) {
+        return false;
+      }
+
+      const retryResult = await requestAndroidPermissions([ANDROID_CAMERA_PERMISSION]);
+
+      if ((retryResult.granted || []).includes(ANDROID_CAMERA_PERMISSION)) {
+        return true;
+      }
+
+      if ((retryResult.deniedAlways || []).includes(ANDROID_CAMERA_PERMISSION)) {
+        return promptOpenCameraSettings();
+      }
+
+      uni.showModal({
+        title: text.cameraPermissionTitle,
+        content: text.cameraPermissionContent,
+        confirmText: text.cameraPermissionRetryConfirm,
+        cancelText: text.cameraPermissionCancel,
+        showCancel: false
+      });
+      return false;
+    }
+
+    uni.showToast({ title: text.cameraPermissionDenied, icon: 'none' });
+    return false;
+  } catch (error) {
+    uni.showToast({ title: text.cameraPermissionDenied, icon: 'none' });
+    return false;
+  }
+}
+
+function isSupportedBarcode(normalized) {
+  const candidates = normalized.lookupCandidates.length
+    ? normalized.lookupCandidates
+    : [normalized.primaryCode];
+
+  return candidates.some((code) => code.startsWith(SUPPORTED_BARCODE_PREFIX));
 }
 
 function upsertScannedGoods(goods) {
@@ -330,94 +499,82 @@ function normalizePriceForSave(value) {
 }
 
 async function handleScanResult(barcode) {
-  const scannedCode = String(barcode || '').trim();
+  const normalized = normalizeBarcodeForLookup(barcode);
 
-  if (!scannedCode) {
-    return;
+  if (!normalized.isValid) {
+    showScanHint(text.invalidBarcode);
+    return { status: 'retry' };
+  }
+
+  if (!isSupportedBarcode(normalized)) {
+    showScanHint(text.unsupportedBarcode);
+    return { status: 'retry' };
   }
 
   try {
-    const goods = await getGoodsByBarcode(scannedCode);
+    for (const candidate of normalized.lookupCandidates) {
+      const goods = await getGoodsByBarcode(candidate);
 
-    if (goods) {
-      upsertScannedGoods(goods);
-      closeEditor();
-      return;
+      if (goods) {
+        uni.showToast({ title: text.scanSuccess, icon: 'success' });
+        upsertScannedGoods(goods);
+        closeEditor();
+        return { status: 'matched' };
+      }
     }
 
-    openEditor(scannedCode);
+    openEditor(normalized.primaryCode);
+    return { status: 'not_found' };
   } catch (error) {
     uni.showToast({ title: text.scanLookupFailed, icon: 'none' });
+    return { status: 'error' };
   }
-}
-
-async function stopScan() {
-  // #ifdef H5
-  if (html5QrCode.value && html5QrCode.value.isScanning) {
-    try {
-      await html5QrCode.value.stop();
-      html5QrCode.value.clear();
-    } catch (error) {
-      // ignore scanner shutdown errors and close the overlay anyway
-    }
-  }
-  // #endif
-
-  showScanner.value = false;
 }
 
 function startScan() {
-  // #ifdef H5
-  showScanner.value = true;
-  nextTick(() => {
-    if (!html5QrCode.value) {
-      html5QrCode.value = new Html5Qrcode('reader');
-    }
+  if (scanBusy.value) {
+    return;
+  }
 
-    html5QrCode.value.start(
-      { facingMode: 'environment' },
-      h5ScanConfig,
-      async (decodedText) => {
-        if (scanBusy.value) {
-          return;
-        }
+  void startScanWithPermission();
+}
 
-        scanBusy.value = true;
-        uni.showToast({ title: text.scanSuccess, icon: 'success' });
+async function startScanWithPermission() {
+  const hasPermission = await ensureCameraPermission();
 
-        try {
-          await stopScan();
-          await handleScanResult(decodedText);
-        } finally {
-          scanBusy.value = false;
-        }
-      },
-      () => {}
-    ).catch(() => {
-      uni.showToast({ title: text.scanFailed, icon: 'none' });
-      showScanner.value = false;
-    });
-  });
-  // #endif
+  if (!hasPermission) {
+    return;
+  }
 
-  // #ifndef H5
   uni.scanCode({
-    scanType: ['barCode', 'qrCode'],
+    onlyFromCamera: true,
+    scanType: ['barCode'],
+    autoDecodeCharset: true,
+    autoZoom: true,
     success: async (res) => {
       if (scanBusy.value) {
         return;
       }
 
       scanBusy.value = true;
+      let status = 'error';
 
       try {
-        await handleScanResult(res.result);
+        const result = await handleScanResult(res.result);
+        status = result?.status || 'error';
       } finally {
         scanBusy.value = false;
       }
+
+      if (status === 'retry') {
+        setTimeout(() => {
+          if (!editorVisible.value) {
+            startScan();
+          }
+        }, SCAN_RETRY_DELAY);
+      }
     }
   });
-  // #endif
 }
 
 async function saveScannedGoods() {
@@ -439,15 +596,13 @@ async function saveScannedGoods() {
     await persistGoods({
       barcode: editorCode.value,
       name: normalizedName,
-      price: normalizedPrice,
-      image: ''
+      price: normalizedPrice
     });
 
     upsertScannedGoods({
       barcode: editorCode.value,
       name: normalizedName,
       price: normalizedPrice,
-      image: '',
       source: 'custom'
     });
     editorVisible.value = false;
@@ -500,7 +655,10 @@ async function checkoutScannedGoods() {
 .ring-outer { width: 220rpx; height: 220rpx; animation: pulse 2s ease-in-out infinite; }
 .ring-inner { width: 180rpx; height: 180rpx; border-color: rgba(242, 204, 170, 0.9); animation: pulse 2s ease-in-out 0.3s infinite; }
 .scan-icon-box { width: 140rpx; height: 140rpx; background: linear-gradient(135deg, #fff7ef 0%, #f9dec2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10rpx 30rpx rgba(180, 118, 67, 0.18); z-index: 2; }
-.scan-icon-image { width: 68rpx; height: 68rpx; }
+.scan-camera-icon { position: relative; width: 72rpx; height: 52rpx; display: flex; align-items: flex-end; justify-content: center; }
+.scan-camera-top { position: absolute; top: 0; left: 16rpx; width: 24rpx; height: 12rpx; border-radius: 10rpx 10rpx 0 0; background: #8c4d28; }
+.scan-camera-body { width: 72rpx; height: 42rpx; border-radius: 16rpx; background: linear-gradient(180deg, #ab6637, #8c4d28); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2rpx 0 rgba(255, 255, 255, 0.18); }
+.scan-camera-lens { width: 26rpx; height: 26rpx; border-radius: 50%; border: 5rpx solid #f8e0ca; box-sizing: border-box; }
 @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.5; } }
 .scan-label { font-size: 34rpx; font-weight: bold; color: #7c4627; margin-top: 30rpx; }
 .goods-list { margin-top: 28rpx; display: flex; flex-direction: column; gap: 20rpx; }
@@ -522,11 +680,13 @@ async function checkoutScannedGoods() {
 .goods-header { position: absolute; top: 20rpx; right: 24rpx; display: flex; align-items: center; justify-content: flex-end; }
 .goods-tag { padding: 10rpx 18rpx; border-radius: 999rpx; background: rgba(196, 106, 51, 0.14); color: #b35f2e; font-size: 22rpx; }
 .goods-body { display: block; }
-.goods-info { display: flex; flex-direction: column; padding-right: 170rpx; }
+.goods-info { display: flex; flex-direction: column; padding-right: 210rpx; }
 .goods-name { font-size: 34rpx; font-weight: 700; color: #4f321f; line-height: 1.28; }
 .goods-code { margin-top: 8rpx; font-size: 22rpx; color: #9a7559; font-family: monospace; }
-.goods-price-row { margin-top: 12rpx; display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; }
+.goods-price-row { margin-top: 12rpx; min-height: 64rpx; display: flex; align-items: center; gap: 16rpx; }
+.goods-price-box { display: flex; align-items: baseline; gap: 12rpx; min-width: 0; min-height: 64rpx; }
 .goods-qty-stepper { display: flex; align-items: center; gap: 10rpx; padding: 6rpx; border-radius: 999rpx; background: rgba(198, 109, 53, 0.08); }
+.goods-qty-stepper-floating { position: absolute; right: 24rpx; bottom: 24rpx; }
 .goods-qty-btn { min-width: 68rpx; height: 48rpx; padding: 0 16rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.92); border: 1rpx solid rgba(198, 109, 53, 0.16); }
 .goods-qty-btn-plus { background: linear-gradient(135deg, #fff3e7, #f5ddc6); }
 .goods-qty-btn-text { font-size: 22rpx; font-weight: 700; color: #b35f2e; }
@@ -555,10 +715,4 @@ async function checkoutScannedGoods() {
 .editor-btn-text { font-size: 30rpx; font-weight: 700; }
 .primary-text { color: #fff; }
 .secondary-text { color: #8e6d56; }
-.scanner-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(56, 35, 24, 0.84); z-index: 9999; }
-.scanner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40rpx; }
-.reader-view { width: 100%; aspect-ratio: 1; background-color: #000; border-radius: 20rpx; overflow: hidden; box-shadow: 0 0 60rpx rgba(210, 149, 95, 0.28); }
-.scanner-footer { margin-top: 60rpx; }
-.cancel-btn { background: linear-gradient(135deg, #e6a76d 0%, #c46a33 100%); padding: 20rpx 60rpx; border-radius: 50rpx; }
-.cancel-text { color: #fff; font-size: 30rpx; font-weight: bold; }
 </style>

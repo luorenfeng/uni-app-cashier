@@ -21,9 +21,6 @@
         <view class="card-ribbon">
           <text class="ribbon-text">{{ text.recorded }}</text>
         </view>
-        <view class="img-wrapper" :class="{ empty: !goodsInfo.image }">
-          <image v-if="goodsInfo.image" class="goods-img" :src="goodsInfo.image" mode="aspectFill"></image>
-        </view>
         <text class="goods-name">{{ goodsInfo.name }}</text>
         <view class="price-row">
           <text class="price-symbol">{{ text.priceSymbol }}</text>
@@ -37,15 +34,15 @@
 
       <view v-else class="not-found-card">
         <text class="nf-emoji">{{ text.notFoundBadge }}</text>
-        <text class="nf-title">{{ text.notFoundTitle }}</text>
-        <view class="nf-code-box">
+        <text class="nf-title">{{ scannedCode ? text.notFoundTitle : text.invalidCodeTitle }}</text>
+        <view class="nf-code-box" v-if="scannedCode">
           <text class="nf-code">{{ text.barcodePrefix }}{{ scannedCode }}</text>
         </view>
-        <text class="nf-hint">{{ text.notFoundHint }}</text>
+        <text class="nf-hint">{{ scannedCode ? text.notFoundHint : text.invalidCodeHint }}</text>
       </view>
 
       <view class="action-area">
-        <view v-if="!goodsInfo" class="action-btn primary-btn" @click="goManualEntry">
+        <view v-if="!goodsInfo && scannedCode" class="action-btn primary-btn" @click="goManualEntry">
           <text class="action-icon">+</text>
           <text class="action-text">{{ text.manualEntry }}</text>
         </view>
@@ -72,8 +69,10 @@ const text = Object.freeze({
   barcodeLabel: '条码',
   notFoundBadge: '未收录',
   notFoundTitle: '仓库中尚未收录此商品',
+  invalidCodeTitle: '未获取到商品条码',
   barcodePrefix: '条码：',
   notFoundHint: '点击下方按钮手动录入',
+  invalidCodeHint: '请返回扫码页重新扫描商品',
   manualEntry: '手动录入此商品',
   backIcon: '←',
   scanAgain: '返回继续扫码',
@@ -85,13 +84,21 @@ const loading = ref(true);
 const goodsInfo = ref(null);
 
 onLoad((options) => {
-  scannedCode.value = options.code || '';
+  scannedCode.value = String(options.code || '').trim();
+
+  if (!scannedCode.value) {
+    loading.value = false;
+  }
 });
 
 onShow(() => {
   if (scannedCode.value) {
     void queryGoodsInfo(scannedCode.value);
+    return;
   }
+
+  goodsInfo.value = null;
+  loading.value = false;
 });
 
 async function queryGoodsInfo(code) {
@@ -112,6 +119,10 @@ function goBack() {
 }
 
 function goManualEntry() {
+  if (!scannedCode.value) {
+    return;
+  }
+
   uni.navigateTo({ url: `/pages/edit/edit?code=${scannedCode.value}` });
 }
 </script>
@@ -136,9 +147,6 @@ function goManualEntry() {
 .goods-card { background: radial-gradient(circle at top right, rgba(255,255,255,0.94), transparent 34%), linear-gradient(150deg, rgba(255,251,247,0.98), rgba(248,236,222,0.94)); border-radius: 30rpx; padding: 40rpx; display: flex; flex-direction: column; align-items: center; border: 1rpx solid rgba(224, 190, 155, 0.36); box-shadow: 0 12rpx 34rpx rgba(152,104,68,0.12), inset 0 1rpx 0 rgba(255,255,255,0.9); position: relative; overflow: hidden; }
 .card-ribbon { position: absolute; top: 30rpx; right: -30rpx; background: linear-gradient(135deg, #e1a367, #be6730); padding: 8rpx 50rpx; transform: rotate(45deg); }
 .ribbon-text { color: #fff; font-size: 20rpx; font-weight: bold; }
-.img-wrapper { width: 400rpx; height: 400rpx; border-radius: 20rpx; overflow: hidden; box-shadow: 0 8rpx 30rpx rgba(0,0,0,0.1); margin-bottom: 30rpx; background: rgba(255, 248, 240, 0.8); }
-.img-wrapper.empty { border: 2rpx dashed rgba(193, 134, 89, 0.22); box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.5); }
-.goods-img { width: 100%; height: 100%; }
 .goods-name { font-size: 40rpx; font-weight: bold; color: #333; text-align: center; margin-bottom: 16rpx; }
 .price-row { display: flex; align-items: baseline; margin-bottom: 20rpx; }
 .price-symbol { font-size: 36rpx; color: #b35f2e; font-weight: bold; }

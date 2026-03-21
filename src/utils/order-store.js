@@ -1,4 +1,3 @@
-const ORDER_STORAGE_KEY = 'settled_orders_v1';
 const DB_NAME = 'goods_store';
 const DB_PATH = '_doc/goods_store.db';
 
@@ -107,33 +106,6 @@ function normalizeOrder(record = {}) {
     createdAt
   };
 }
-
-function getLegacyOrders() {
-  const orders = uni.getStorageSync(ORDER_STORAGE_KEY);
-  return Array.isArray(orders) ? orders.map(normalizeOrder) : [];
-}
-
-function saveLegacyOrders(orders) {
-  uni.setStorageSync(
-    ORDER_STORAGE_KEY,
-    orders.map((order) => ({
-      orderNo: order.orderNo,
-      itemCount: order.itemCount,
-      totalPrice: order.totalPrice,
-      createdAt: order.createdAt,
-      items: serializeOrderItems(order.items)
-    }))
-  );
-}
-
-function saveLegacyOrder(record) {
-  const nextOrder = normalizeOrder(record);
-  const orders = getLegacyOrders();
-  saveLegacyOrders([nextOrder, ...orders]);
-  return nextOrder;
-}
-
-// #ifdef APP-PLUS
 function waitForPlusReady() {
   return new Promise((resolve) => {
     if (typeof plus !== 'undefined') {
@@ -150,8 +122,25 @@ function waitForPlusReady() {
   });
 }
 
+function isDatabaseOpen() {
+  try {
+    return plus.sqlite.isOpenDatabase({
+      name: DB_NAME,
+      path: DB_PATH
+    });
+  } catch (error) {
+    return false;
+  }
+}
+
 function openDatabase() {
   return new Promise((resolve, reject) => {
+    if (dbReady || isDatabaseOpen()) {
+      dbReady = true;
+      resolve();
+      return;
+    }
+
     plus.sqlite.openDatabase({
       name: DB_NAME,
       path: DB_PATH,
@@ -160,9 +149,9 @@ function openDatabase() {
         resolve();
       },
       fail: (error) => {
-        const message = String((error && error.message) || error);
+        const message = String((error && error.message) || error).toLowerCase();
 
-        if (message.includes('already opened')) {
+        if (message.includes('already open') || message.includes('already opened')) {
           dbReady = true;
           resolve();
           return;
@@ -241,24 +230,13 @@ async function initAppPlusOrderStore() {
   await openDatabase();
   await createOrdersTable();
 }
-// #endif
-
-async function initH5OrderStore() {
-  return Promise.resolve();
-}
 
 async function initOrderStore() {
   if (!initPromise) {
-    // #ifdef APP-PLUS
     initPromise = initAppPlusOrderStore().catch((error) => {
       initPromise = null;
       throw error;
     });
-    // #endif
-
-    // #ifndef APP-PLUS
-    initPromise = initH5OrderStore();
-    // #endif
   }
 
   return initPromise;
@@ -266,26 +244,12 @@ async function initOrderStore() {
 
 export async function saveOrder(record) {
   await initOrderStore();
-
-  // #ifdef APP-PLUS
-  if (dbReady) {
-    return saveAppPlusOrder(record);
-  }
-  // #endif
-
-  return saveLegacyOrder(record);
+  return saveAppPlusOrder(record);
 }
 
 export async function getOrderList() {
   await initOrderStore();
-
-  // #ifdef APP-PLUS
-  if (dbReady) {
-    return getAppPlusOrderList();
-  }
-  // #endif
-
-  return getLegacyOrders();
+  return getAppPlusOrderList();
 }
 
 export async function ensureOrderStoreReady() {
