@@ -1,7 +1,7 @@
 import { BUILTIN_GOODS, PRESET_CUSTOM_GOODS } from '../data/preset-goods';
 
-const SQLITE_PRESET_CUSTOM_SEED_FLAG = 'goods_sqlite_preset_seeded_v3';
-const GOODS_STORE_RESET_FLAG = 'goods_store_reset_v2';
+const SQLITE_PRESET_CUSTOM_SEED_FLAG = 'goods_sqlite_preset_seeded_v4';
+const GOODS_STORE_RESET_FLAG = 'goods_store_reset_v3';
 const DB_NAME = 'goods_store';
 const DB_PATH = '_doc/goods_store.db';
 

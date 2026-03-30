@@ -412,18 +412,19 @@ function upsertScannedGoods(goods) {
   const existingIndex = scannedGoodsList.value.findIndex((item) => item.barcode === nextGoods.barcode);
 
   if (existingIndex === -1) {
-    scannedGoodsList.value = [...scannedGoodsList.value, nextGoods];
+    scannedGoodsList.value = [nextGoods, ...scannedGoodsList.value];
     return;
   }
 
-  const nextList = [...scannedGoodsList.value];
-  nextList[existingIndex] = {
-    ...nextList[existingIndex],
+  const currentItem = scannedGoodsList.value[existingIndex];
+  const updatedItem = {
+    ...currentItem,
     ...nextGoods
   };
-  nextList[existingIndex].quantity =
-    normalizeScannedQuantity(scannedGoodsList.value[existingIndex]?.quantity) + nextGoods.quantity;
-  scannedGoodsList.value = nextList;
+  updatedItem.quantity = normalizeScannedQuantity(currentItem?.quantity) + nextGoods.quantity;
+
+  const nextList = scannedGoodsList.value.filter((item) => item.barcode !== nextGoods.barcode);
+  scannedGoodsList.value = [updatedItem, ...nextList];
 }
 
 function increaseScannedGoods(barcode) {

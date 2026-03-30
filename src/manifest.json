@@ -2,8 +2,8 @@
     "name" : "sy",
     "appid" : "__UNI__59078DD",
     "description" : "shuyan",
-    "versionName" : "1.1.0",
-    "versionCode" : 110,
+    "versionName" : "1.2.0",
+    "versionCode" : 120,
     "vueVersion" : "3",
     "transformPx" : false,
     "app-plus" : {
@@ -78,5 +78,6 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "fallbackLocale" : "zh-Hans"
+    "fallbackLocale" : "zh-Hans",
+    "locale" : "zh-Hans"
 }
