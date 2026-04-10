@@ -1,25 +1,69 @@
 import { BUILTIN_GOODS, PRESET_CUSTOM_GOODS } from '../data/preset-goods';
 
-const SQLITE_PRESET_CUSTOM_SEED_FLAG = 'goods_sqlite_preset_seeded_v4';
-const GOODS_STORE_RESET_FLAG = 'goods_store_reset_v3';
+const PRESET_GOODS_SYNC_STORAGE_KEY = 'goods_preset_sync_version';
+const PRESET_GOODS_SYNC_VERSION = 'v1';
+const LEGACY_GOODS_STORAGE_KEYS = [
+  'goods_sqlite_preset_seeded_v4',
+  'goods_store_reset_v3',
+  'custom_goods',
+  'custom_goods_preset_seeded_v1',
+  'custom_goods_preset_seeded_v2',
+  'goods_sqlite_migrated_v1'
+];
 const DB_NAME = 'goods_store';
 const DB_PATH = '_doc/goods_store.db';
 
 let initPromise = null;
 let dbReady = false;
 
+function normalizeGoodsSource(source) {
+  if (source === 'builtin' || source === 'preset' || source === 'custom') {
+    return source;
+  }
+
+  return 'custom';
+}
+
+function normalizeGoodsPrice(value) {
+  const raw = String(value ?? '').trim();
+
+  if (!raw) {
+    return '';
+  }
+
+  const parsed = Number.parseFloat(raw.replace(/[^\d.]/g, ''));
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : raw;
+}
+
 function normalizeGoods(record = {}) {
   return {
-    barcode: String(record.barcode || ''),
-    name: String(record.name || ''),
-    price: String(record.price || ''),
-    source: record.source || 'custom'
+    barcode: String(record.barcode || '').trim(),
+    name: String(record.name || '').trim(),
+    price: normalizeGoodsPrice(record.price),
+    source: normalizeGoodsSource(record.source)
   };
 }
+
+function isSameGoodsRecord(left, right) {
+  const leftItem = normalizeGoods(left);
+  const rightItem = normalizeGoods(right);
+  return leftItem.barcode === rightItem.barcode
+    && leftItem.name === rightItem.name
+    && leftItem.price === rightItem.price;
+}
+
+const NORMALIZED_PRESET_GOODS = PRESET_CUSTOM_GOODS
+  .map((item) => normalizeGoods({ ...item, source: 'preset' }))
+  .filter((item) => item.barcode);
+
+const PRESET_GOODS_MAP = new Map(
+  NORMALIZED_PRESET_GOODS.map((item) => [item.barcode, item])
+);
 
 function now() {
   return Date.now();
 }
+
 function waitForPlusReady() {
   return new Promise((resolve) => {
     if (typeof plus !== 'undefined') {
@@ -101,6 +145,12 @@ function escapeSql(value) {
   return String(value ?? '').replace(/'/g, "''");
 }
 
+function clearLegacyGoodsStorageFlags() {
+  LEGACY_GOODS_STORAGE_KEYS.forEach((key) => {
+    uni.removeStorageSync(key);
+  });
+}
+
 async function createGoodsTable() {
   await executeSql(`
     CREATE TABLE IF NOT EXISTS goods (
@@ -172,25 +222,13 @@ async function migrateGoodsTableIfNeeded() {
   }
 }
 
-async function resetAppPlusGoodsStoreIfNeeded() {
-  if (uni.getStorageSync(GOODS_STORE_RESET_FLAG)) {
+async function upsertGoodsRecord(record) {
+  const item = normalizeGoods(record);
+
+  if (!item.barcode) {
     return;
   }
 
-  await executeSql(`
-    DELETE FROM goods
-  `);
-
-  uni.removeStorageSync(SQLITE_PRESET_CUSTOM_SEED_FLAG);
-  uni.removeStorageSync('custom_goods');
-  uni.removeStorageSync('custom_goods_preset_seeded_v1');
-  uni.removeStorageSync('custom_goods_preset_seeded_v2');
-  uni.removeStorageSync('goods_sqlite_migrated_v1');
-  uni.setStorageSync(GOODS_STORE_RESET_FLAG, 1);
-}
-
-async function upsertGoodsRecord(record) {
-  const item = normalizeGoods(record);
   await executeSql(`
     INSERT OR REPLACE INTO goods (
       barcode, name, price, source, updated_at
@@ -206,13 +244,22 @@ async function upsertGoodsRecord(record) {
 
 async function seedBuiltinGoods() {
   for (const item of BUILTIN_GOODS) {
+    const normalizedItem = normalizeGoods({
+      ...item,
+      source: 'builtin'
+    });
+
+    if (!normalizedItem.barcode) {
+      continue;
+    }
+
     await executeSql(`
       INSERT OR IGNORE INTO goods (
         barcode, name, price, source, updated_at
       ) VALUES (
-        '${escapeSql(item.barcode)}',
-        '${escapeSql(item.name)}',
-        '${escapeSql(item.price)}',
+        '${escapeSql(normalizedItem.barcode)}',
+        '${escapeSql(normalizedItem.name)}',
+        '${escapeSql(normalizedItem.price)}',
         'builtin',
         ${now()}
       )
@@ -220,19 +267,48 @@ async function seedBuiltinGoods() {
   }
 }
 
-async function seedAppPlusPresetCustomGoods() {
-  if (uni.getStorageSync(SQLITE_PRESET_CUSTOM_SEED_FLAG)) {
+async function getAllGoodsRows() {
+  const rows = await selectSql(`
+    SELECT barcode, name, price, source
+    FROM goods
+  `);
+
+  return (rows || []).map(normalizeGoods);
+}
+
+async function syncPresetGoodsIfNeeded() {
+  if (uni.getStorageSync(PRESET_GOODS_SYNC_STORAGE_KEY) === PRESET_GOODS_SYNC_VERSION) {
     return;
   }
 
-  for (const item of PRESET_CUSTOM_GOODS) {
-    await upsertGoodsRecord({
-      ...item,
-      source: 'custom'
-    });
+  const existingRows = await getAllGoodsRows();
+  const existingMap = new Map(existingRows.map((item) => [item.barcode, item]));
+  const presetBarcodes = new Set(NORMALIZED_PRESET_GOODS.map((item) => item.barcode));
+
+  for (const row of existingRows) {
+    if (row.source !== 'preset' || presetBarcodes.has(row.barcode)) {
+      continue;
+    }
+
+    await executeSql(`
+      DELETE FROM goods
+      WHERE barcode = '${escapeSql(row.barcode)}'
+        AND source = 'preset'
+    `);
   }
 
-  uni.setStorageSync(SQLITE_PRESET_CUSTOM_SEED_FLAG, 1);
+  for (const presetItem of NORMALIZED_PRESET_GOODS) {
+    const existingItem = existingMap.get(presetItem.barcode);
+
+    if (existingItem?.source === 'custom' && !isSameGoodsRecord(existingItem, presetItem)) {
+      continue;
+    }
+
+    await upsertGoodsRecord(presetItem);
+  }
+
+  clearLegacyGoodsStorageFlags();
+  uni.setStorageSync(PRESET_GOODS_SYNC_STORAGE_KEY, PRESET_GOODS_SYNC_VERSION);
 }
 
 async function initAppPlusStore() {
@@ -240,9 +316,8 @@ async function initAppPlusStore() {
   await openDatabase();
   await createGoodsTable();
   await migrateGoodsTableIfNeeded();
-  await resetAppPlusGoodsStoreIfNeeded();
-  await seedAppPlusPresetCustomGoods();
   await seedBuiltinGoods();
+  await syncPresetGoodsIfNeeded();
 }
 
 async function getAppPlusGoodsByBarcode(barcode) {
@@ -256,12 +331,18 @@ async function getAppPlusGoodsByBarcode(barcode) {
   return rows && rows[0] ? normalizeGoods(rows[0]) : null;
 }
 
-async function getAppPlusCustomGoodsList() {
+async function getAppPlusGoodsList() {
   const rows = await selectSql(`
     SELECT barcode, name, price, source
     FROM goods
-    WHERE source = 'custom'
-    ORDER BY updated_at DESC, barcode DESC
+    ORDER BY
+      CASE source
+        WHEN 'custom' THEN 0
+        WHEN 'preset' THEN 1
+        ELSE 2
+      END,
+      updated_at DESC,
+      barcode DESC
   `);
 
   return (rows || []).map(normalizeGoods);
@@ -279,6 +360,13 @@ async function deleteAppPlusGoods(barcode) {
 
   if (!existing || existing.source !== 'custom') {
     return false;
+  }
+
+  const presetItem = PRESET_GOODS_MAP.get(barcode);
+
+  if (presetItem) {
+    await upsertGoodsRecord(presetItem);
+    return true;
   }
 
   await executeSql(`
@@ -305,9 +393,9 @@ export async function getGoodsByBarcode(barcode) {
   return getAppPlusGoodsByBarcode(barcode);
 }
 
-export async function getCustomGoodsList() {
+export async function getGoodsList() {
   await initGoodsStore();
-  return getAppPlusCustomGoodsList();
+  return getAppPlusGoodsList();
 }
 
 export async function saveGoods(record) {

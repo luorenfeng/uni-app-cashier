@@ -56,7 +56,7 @@
       </view>
     </view>
 
-    <view v-if="!showScanner && scannedGoodsList.length" class="goods-summary-dock">
+    <view v-if="scannedGoodsList.length" class="goods-summary-dock">
       <view class="goods-summary">
         <view class="summary-main">
           <view class="summary-copy">
@@ -574,6 +574,15 @@ async function startScanWithPermission() {
           }
         }, SCAN_RETRY_DELAY);
       }
+    },
+    fail: (error) => {
+      const message = String((error && error.errMsg) || error || '').toLowerCase();
+
+      if (message.includes('cancel')) {
+        return;
+      }
+
+      uni.showToast({ title: text.scanFailed, icon: 'none' });
     }
   });
 }

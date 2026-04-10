@@ -68,7 +68,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { onPageScroll, onShow } from '@dcloudio/uni-app';
-import { getCustomGoodsList } from '../../utils/goods-store';
+import { getGoodsList } from '../../utils/goods-store';
 
 const text = Object.freeze({
   title: '我的商品库',
@@ -123,7 +123,7 @@ onPageScroll((event) => {
 
 async function loadGoods() {
   try {
-    goodsList.value = await getCustomGoodsList();
+    goodsList.value = await getGoodsList();
     applyGoodsFilter(searchKeyword.value);
   } catch (error) {
     goodsList.value = [];
@@ -214,7 +214,6 @@ function exportData() {
 .export-chip:active { background: linear-gradient(135deg, #e8ad74, #c46e37); }
 .export-text { font-size: 24rpx; color: #fffaf5; font-weight: 500; }
 .hero-search { margin-top: 22rpx; height: 84rpx; display: flex; align-items: center; gap: 18rpx; padding: 0 22rpx; border-radius: 999rpx; background: rgba(255, 246, 238, 0.96); border: 1rpx solid rgba(224, 190, 155, 0.32); box-shadow: inset 0 1rpx 0 rgba(255, 255, 255, 0.86); }
-.search-mark { width: 42rpx; height: 42rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(225, 163, 103, 0.22), rgba(190, 103, 48, 0.16)); color: #b35f2e; font-size: 24rpx; font-weight: 700; flex-shrink: 0; }
 .search-input { flex: 1; min-width: 0; height: 84rpx; font-size: 28rpx; color: #4f321f; }
 .search-placeholder { color: #b79378; font-size: 26rpx; }
 .search-clear { padding: 10rpx 18rpx; border-radius: 999rpx; background: rgba(190, 103, 48, 0.1); color: #b35f2e; font-size: 22rpx; font-weight: 600; flex-shrink: 0; }

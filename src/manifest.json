@@ -2,8 +2,8 @@
     "name" : "sy",
     "appid" : "__UNI__59078DD",
     "description" : "shuyan",
-    "versionName" : "1.2.0",
-    "versionCode" : 120,
+    "versionName" : "1.3.0",
+    "versionCode" : 130,
     "vueVersion" : "3",
     "transformPx" : false,
     "app-plus" : {
@@ -64,9 +64,9 @@
                 "androidStyle" : "common",
                 "iosStyle" : "common",
                 "android" : {
-                    "hdpi" : "D:/1/YxSexmOhqyMJDB.thumb.png",
-                    "xxhdpi" : "D:/1/YxSexmOhqyMJDB.thumb.png",
-                    "xhdpi" : "D:/1/YxSexmOhqyMJDB.thumb.png"
+                    "hdpi" : "unpackage/res/splash/YxSexmOhqyMJDB.thumb.png",
+                    "xxhdpi" : "unpackage/res/splash/YxSexmOhqyMJDB.thumb.png",
+                    "xhdpi" : "unpackage/res/splash/YxSexmOhqyMJDB.thumb.png"
                 },
                 "useOriginalMsgbox" : false
             },
